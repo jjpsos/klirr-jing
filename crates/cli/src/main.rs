@@ -26,7 +26,7 @@ fn prepare_invoice_input_data() -> Result<InvoiceInputData> {
 /// Compile the Typst source into a PDF and safe it at the specified path.
 fn create_pdf<'s>(pdf_name: impl Into<Cow<'s, str>>) -> Result<PathBuf> {
     let data = prepare_invoice_input_data()?;
-    let pdf = render(data)?;
+    let pdf = render(data.to_typst())?;
     save_pdf(pdf, pdf_name.into())
 }
 

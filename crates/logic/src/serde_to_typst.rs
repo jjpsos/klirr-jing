@@ -1,10 +1,17 @@
 use crate::prelude::*;
-
+use indoc::indoc;
 
 /// Converts any `Serialize`able Rust struct into Typst syntax.
-pub fn to_typst_let<T: Serialize>(name: &str, data: &T) -> String {
+pub fn to_typst_let<T: Serialize>(data: &T) -> String {
     let value = serde_json::to_value(data).expect("Serialization failed");
-    format!("#let {} = {}", name, to_typst_value(&value, 0))
+    format!(
+        indoc! {r#"
+        #let make_invoice() = {{
+          {}
+        }}
+        "#},
+        to_typst_value(&value, 0)
+    )
 }
 
 /// Recursively converts a serde_json::Value into pretty-printed Typst syntax.
@@ -70,8 +77,8 @@ mod tests {
     #[test]
     fn test_to_typst_let() {
         let input = InvoiceInputData::sample();
-        let typst = to_typst_let("invoice", &input);
-        let expected = include_str!("../../render/src/input.typ");
+        let typst = to_typst_let(&input);
+        let expected = include_str!("./fixtures/expected_input.typ");
         pretty_assertions::assert_eq!(typst, expected);
     }
 }

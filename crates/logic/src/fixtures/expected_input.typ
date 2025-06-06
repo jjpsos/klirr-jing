@@ -1,4 +1,5 @@
-#let invoice = (
+#let make_invoice() = {
+  (
   client: (
     company_name: "Holmes Ltd",
     contact_person: "Sherlock Holmes",
@@ -60,3 +61,4 @@
     vat_number: "SE556123456701",
   ),
 )
+}

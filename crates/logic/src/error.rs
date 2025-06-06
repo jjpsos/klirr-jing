@@ -6,6 +6,10 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// during PDF generation and manipulation.
 #[derive(Clone, Debug, ThisError)]
 pub enum Error {
+    /// Error when loading a resource for typst.
+    #[error("Failed to load Typst source, because: {underlying}")]
+    LoadSource { underlying: String },
+
     /// Error when compiling Typst source to a PagedDocument.
     #[error("Failed to compile Typst source, because: {underlying}")]
     BuildPdf { underlying: String },

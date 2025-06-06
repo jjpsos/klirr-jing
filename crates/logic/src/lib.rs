@@ -4,11 +4,10 @@ mod pdf;
 mod serde_to_typst;
 
 pub mod prelude {
-    pub(crate) use crate::serde_to_typst::*;
-
     pub use crate::error::*;
     pub use crate::models::*;
     pub use crate::pdf::*;
+    pub use crate::serde_to_typst::*;
 
     pub use derive_more::{AsRef, Deref, From};
     pub use getset::Getters;

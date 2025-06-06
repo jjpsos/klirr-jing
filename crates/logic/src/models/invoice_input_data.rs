@@ -1,9 +1,23 @@
 use crate::prelude::*;
 
+pub type InvoiceInputData = InvoiceInputDataAbstract<LineItems>;
+pub type InvoiceInputDataToTypst = InvoiceInputDataAbstract<LineItemsFlat>;
+
+impl InvoiceInputData {
+    pub fn to_typst(self) -> InvoiceInputDataToTypst {
+        InvoiceInputDataToTypst {
+            information: self.information,
+            vendor: self.vendor,
+            client: self.client,
+            line_items: self.line_items.into(),
+        }
+    }
+}
+
 /// The input data for the invoice, which includes information about the invoice,
 /// the vendor, and the client and the products/services included in the invoice.
 #[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
-pub struct InvoiceInputData {
+pub struct InvoiceInputDataAbstract<Items: Serialize> {
     /// Information about this specific invoice.
     #[builder(setter(into))]
     #[getset(get = "pub")]
@@ -22,7 +36,7 @@ pub struct InvoiceInputData {
     /// Services or expenses included in this invoice to be paid by the client.
     #[builder(setter(into))]
     #[getset(get = "pub")]
-    line_items: LineItems,
+    line_items: Items,
 }
 
 impl InvoiceInputData {

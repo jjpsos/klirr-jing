@@ -1,28 +1,30 @@
-use chrono::DateTime;
-use chrono::Datelike;
-use chrono::FixedOffset;
-use chrono::Local;
+use crate::prelude::*;
+
+use chrono::{DateTime, Datelike, FixedOffset, Local};
+use invoice_typst_logic::prelude::TypedBuilder;
+use serde_json::de;
 use std::path::Path;
-use typst::Library;
-use typst::World;
-use typst::foundations::Bytes;
-use typst::foundations::Datetime;
-use typst::syntax::{FileId, Source, VirtualPath};
-use typst::text::{Font, FontBook};
-use typst::utils::LazyHash;
+use typst::{
+    Library, World,
+    foundations::{Bytes, Datetime},
+    syntax::{FileId, Source, VirtualPath},
+    text::{Font, FontBook},
+    utils::LazyHash,
+};
 use typst_kit::fonts::FontSearcher;
 
-pub struct MinimalWorld {
-    file_id: FileId,
-    source: Source,
+#[derive(Debug, Getters)]
+pub struct Environment {
     library: LazyHash<Library>,
+    #[getset(get = "pub")]
     book: LazyHash<FontBook>,
+    #[getset(get = "pub")]
     fonts: Vec<typst_kit::fonts::FontSlot>,
+    #[getset(get = "pub")]
     now: DateTime<Local>,
 }
-
-impl MinimalWorld {
-    fn new(source: Source, file_id: FileId) -> Self {
+impl Default for Environment {
+    fn default() -> Self {
         // Build the standard library (Typst definitions and styles).
         let lib = Library::builder().build();
         // Search for fonts (includes Typst default fonts if embed feature enabled).
@@ -30,58 +32,127 @@ impl MinimalWorld {
         // Get the current local date and time
         let now = Local::now();
 
-        MinimalWorld {
-            file_id,
-            source,
+        Self {
             library: LazyHash::new(lib),
             book: LazyHash::new(fonts_data.book),
             fonts: fonts_data.fonts,
             now,
         }
     }
+}
 
-    pub fn with_path(path: &Path) -> Self {
+#[derive(Debug, Getters, TypedBuilder)]
+pub struct Content {
+    #[getset(get = "pub")]
+    data: Source,
+    #[getset(get = "pub")]
+    ui: Source,
+}
+
+#[derive(Debug, Getters)]
+pub struct MinimalWorld {
+    #[getset(get = "pub")]
+    content: Content,
+    #[getset(get = "pub")]
+    environment: Environment,
+}
+
+trait LoadSource: Sized {
+    fn load_source_at(path: &Path) -> Result<Self>;
+}
+
+trait InlineSource: Sized {
+    fn inline(source_text: String, virtual_path: impl AsRef<Path>) -> Result<Self>;
+}
+
+impl InlineSource for Source {
+    fn inline(source_text: String, virtual_path: impl AsRef<Path>) -> Result<Self> {
+        // Create a new FileId for the virtual inline file ("/inline.typ").
+        let file_id = FileId::new(None, VirtualPath::new(virtual_path));
+        // Prepare the Typst source.
+        Ok(Source::new(file_id, source_text))
+    }
+}
+
+impl LoadSource for Source {
+    fn load_source_at(path: &Path) -> Result<Self> {
         // Create a new FileId for the virtual main file ("/main.typ").
         let file_id = FileId::new(None, VirtualPath::new(path));
         // Read the Typst source from the file.
-        let source_text = std::fs::read_to_string(path).unwrap_or_else(|e| {
-            panic!(
+        let source_text = std::fs::read_to_string(path).map_err(|e| {
+            let msg = format!(
                 "Failed to read Typst source from {:?}, error: {:?}",
                 path, e
-            )
-        });
+            );
+            error!("{}", msg);
+            Error::LoadSource { underlying: msg }
+        })?;
         // Prepare the Typst source.
-        let source = Source::new(file_id, source_text);
-        Self::new(source, file_id)
+        Ok(Source::new(file_id, source_text))
+    }
+}
+
+impl MinimalWorld {
+    fn new(ui: Source, data: Source) -> Self {
+        let content = Content::builder().data(data).ui(ui).build();
+        let environment = Environment::default();
+
+        Self {
+            content,
+            environment,
+        }
     }
 
-    pub fn with_string_literal(source_text: &str) -> Self {
-        // Create a new FileId for the virtual main file ("/main.typ").
-        let file_id = FileId::new(None, VirtualPath::new(Path::new("main.typ")));
-        // Prepare the Typst source.
-        let source = Source::new(file_id, source_text.to_string());
-        Self::new(source, file_id)
+    pub fn with_path(path_to_ui: &Path, data_inline: String) -> Result<Self> {
+        Ok(Self::new(
+            Source::load_source_at(path_to_ui)?,
+            Source::inline(data_inline, "/crates/render/src/input.typ")?,
+        ))
     }
 }
 
 impl World for MinimalWorld {
     fn library(&self) -> &LazyHash<Library> {
-        &self.library
+        &self.environment().library
     }
 
     fn book(&self) -> &LazyHash<FontBook> {
-        &self.book
+        &self.environment().book()
     }
 
     fn main(&self) -> FileId {
-        self.file_id
+        let main_id = self.content().ui().id();
+        debug!(
+            "Using main file with id: {:?}, contents:\n{}",
+            main_id,
+            self.content().ui().text()
+        );
+        main_id
     }
 
     fn source(&self, id: FileId) -> typst::diag::FileResult<Source> {
-        if id == self.file_id {
-            Ok(self.source.clone())
+        if id == self.main() {
+            let source = self.content().ui().clone();
+            debug!(
+                "Loaded source with id: {:?}, contents:\n{}",
+                id,
+                source.text()
+            );
+            Ok(source)
+        } else if id == self.content.data().id() {
+            let source = self.content().data().clone();
+            debug!(
+                "Loaded source with id: {:?}, contents:\n{}",
+                id,
+                source.text()
+            );
+            Ok(source)
         } else {
-            panic!("Only the main file is supported in this minimal example")
+            panic!(
+                "Only the main file is supported in this minimal example, got id: '{:?}' != {:?} (self.content.data.id())",
+                id,
+                self.content.data().id()
+            );
         }
     }
 
@@ -99,17 +170,17 @@ impl World for MinimalWorld {
     }
 
     fn font(&self, index: usize) -> Option<Font> {
-        self.fonts.get(index)?.get()
+        self.environment().fonts.get(index)?.get()
     }
 
     fn today(&self, offset: Option<i64>) -> Option<Datetime> {
-        // Apply the UTC offset to self.now
+        let now = self.environment().now();
         let with_offset = match offset {
-            None => self.now.with_timezone(self.now.offset()).fixed_offset(),
+            None => now.with_timezone(now.offset()).fixed_offset(),
             Some(hours) => {
                 let seconds = i32::try_from(hours).ok()?.checked_mul(3600)?;
                 let fixed = FixedOffset::east_opt(seconds)?;
-                self.now.with_timezone(&fixed)
+                now.with_timezone(&fixed)
             }
         };
 
