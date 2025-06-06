@@ -148,7 +148,7 @@ pub struct InvoiceInformation {
     identifier: InvoiceIdentifier,
 
     /// A purchase order number associated with this invoice, e.g. `"PO-12345"`
-    /// Typically agreed upon between the vendor and clien before the
+    /// Typically agreed upon between the vendor and client before the
     /// invoice is issued.
     #[builder(setter(into))]
     #[getset(get = "pub")]

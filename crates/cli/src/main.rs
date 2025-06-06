@@ -3,7 +3,7 @@ mod init_logging;
 use invoice_typst_render::prelude::*;
 use std::{borrow::Cow, path::PathBuf};
 
-/// Saves tge PDF file to the specified path.
+/// Saves the PDF file to the specified path.
 fn save_pdf(pdf: Pdf, pdf_name: Cow<str>) -> Result<PathBuf> {
     // now save the PDF to a file
     let output_path = PathBuf::from(pdf_name.as_ref());
