@@ -1,6 +1,7 @@
-use std::{borrow::Cow, path::PathBuf};
+mod init_logging;
 
 use invoice_typst_render::prelude::*;
+use std::{borrow::Cow, path::PathBuf};
 
 /// Saves tge PDF file to the specified path.
 fn save_pdf(pdf: Pdf, pdf_name: Cow<str>) -> Result<PathBuf> {
@@ -14,13 +15,24 @@ fn save_pdf(pdf: Pdf, pdf_name: Cow<str>) -> Result<PathBuf> {
     Ok(output_path)
 }
 
+fn prepare_invoice_input_data() -> Result<InvoiceInputData> {
+    // Prepare the data for the Typst source.
+    // This is a placeholder function, you can add your own logic here.
+    info!("Preparing invoice input data for PDF generation...");
+   let input = InvoiceInputData::sample();
+    Ok(input)
+}
+
 /// Compile the Typst source into a PDF and safe it at the specified path.
 fn create_pdf<'s>(pdf_name: impl Into<Cow<'s, str>>) -> Result<PathBuf> {
-    let pdf = render()?;
+    let data = prepare_invoice_input_data()?;
+    let pdf = render(data)?;
     save_pdf(pdf, pdf_name.into())
 }
 
 fn main() {
+    init_logging::init_logging();
+    info!("🔮 Starting PDF creation...");
     match create_pdf("output.pdf") {
         Ok(path) => info!("✅ PDF created successfully at: {}", path.display()),
         Err(e) => error!("Error creating PDF: {}", e),

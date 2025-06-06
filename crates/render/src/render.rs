@@ -1,14 +1,16 @@
+use std::path::Path;
+
 use crate::prelude::*;
 
 use typst::layout::PagedDocument;
 use typst_pdf::PdfOptions;
 use typst_pdf::pdf;
 
-pub fn render() -> Result<Pdf> {
-    // Hardcoded Typst source string to compile.
-    let source_text = "= Narnia";
+pub fn render(data: InvoiceInputData) -> Result<Pdf> {
     // Create a "World" (environment/context) for Typst compilation.
-    let world = MinimalWorld::new(source_text);
+    // let world = MinimalWorld::with_string_literal(source_text);
+    let world = MinimalWorld::with_path(Path::new("./crates/render/src/mini.typ"));
+
     // Compile the Typst source into a PagedDocument (layouted pages).
     let compile_result = typst::compile::<PagedDocument>(&world);
     let doc = compile_result.output.map_err(|e| {

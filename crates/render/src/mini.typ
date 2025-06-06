@@ -1,0 +1,2 @@
+#let title = "Narnia"
+= #title
