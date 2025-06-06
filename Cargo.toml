@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = ["crates/cli", "crates/render", "crates/logic"]
+
+[workspace.dependencies]
+# Internal dependencies
+invoice-typst-cli = { path = "crates/cli" }
+invoice-typst-render = { path = "crates/render" }
+invoice-typst-logic = { path = "crates/logic" }
+
+# External dependencies
+thiserror = "2.0.12"
+derive_more = { version = "2.0.1", features = ["full"] }
+log = "0.4.27"
