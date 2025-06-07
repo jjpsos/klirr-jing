@@ -16,12 +16,7 @@
     vat_number: "GB987654321",
   ),
   information: (
-    currency: "EUR",
-    date: (
-      day: 31,
-      month: 5,
-      year: 2025,
-    ),
+    date: "2025-05-31",
     identifier: "INV-2025-001",
     purchase_order: "PO-12345",
     terms: (
@@ -31,14 +26,10 @@
   line_items: (
     Expenses: [
       (
-        currency: "EUR",
+        currency: "GBP",
         name: "Consulting services",
         quantity: 10.0,
-        transaction_date: (
-          day: 31,
-          month: 5,
-          year: 2025,
-        ),
+        transaction_date: "2025-05-31",
         unit_price: 50.0,
       ),
     ],
@@ -46,6 +37,7 @@
   payment_info: (
     bank_name: "SEB",
     bic: "ESSESESS",
+    currency: "EUR",
     iban: "SE3550000000054910000003",
   ),
   vendor: (

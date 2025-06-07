@@ -17,18 +17,12 @@ use crate::prelude::*;
 #[derive(Debug, Clone, Deserialize, Getters)]
 struct FrankfurterApiResponse {
     #[getset(get = "pub")]
-    amount: f64,
-    #[getset(get = "pub")]
-    base: Currency,
-    #[getset(get = "pub")]
-    date: Date,
-    #[getset(get = "pub")]
     rates: HashMap<Currency, f64>,
 }
 
+#[cfg(test)]
 mod tests_frankfurter_api {
     use super::*;
-    use crate::prelude::*;
 
     #[test]
     fn test_frankfurter_api_response() {
@@ -42,7 +36,10 @@ mod tests_frankfurter_api {
         }"#;
 
         let parsed: FrankfurterApiResponse = serde_json::from_str(response).unwrap();
-        assert_eq!(parsed.amount, 1.0);
+        assert_eq!(
+            parsed.rates.get(&Currency::EUR).unwrap().to_string(),
+            "1.174"
+        );
     }
 }
 
