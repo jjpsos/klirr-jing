@@ -17,28 +17,48 @@
   ),
   information: (
     date: "2025-05-31",
-    identifier: "INV-2025-001",
+    due_date: "2025-06-30",
+    footer_text: "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
+    identifier: "INV-9876",
     purchase_order: "PO-12345",
     terms: (
       net: 30,
     ),
   ),
   line_items: (
-    Expenses: [
+    expenses: (
       (
-        currency: "GBP",
-        name: "Consulting services",
-        quantity: 10.0,
-        transaction_date: "2025-05-31",
-        unit_price: 50.0,
+        currency: "EUR",
+        name: "Breakfast",
+        quantity: 1.0,
+        total_cost: 1602.25,
+        transaction_date: "2025-05-20",
+        unit_price: 1602.25,
       ),
-    ],
+      (
+        currency: "EUR",
+        name: "Coffee",
+        quantity: 2.0,
+        total_cost: 9.392,
+        transaction_date: "2025-05-31",
+        unit_price: 4.696,
+      ),
+      (
+        currency: "EUR",
+        name: "Sandwich",
+        quantity: 1.0,
+        total_cost: 8.218,
+        transaction_date: "2025-05-31",
+        unit_price: 8.218,
+      ),
+    ),
+    service: none,
   ),
   payment_info: (
     bank_name: "SEB",
     bic: "ESSESESS",
     currency: "EUR",
-    iban: "SE3550000000054910000003",
+    iban: "SE21 9000 0123 9876 5432 1009",
   ),
   vendor: (
     company_name: "Bra Detektiv AB",

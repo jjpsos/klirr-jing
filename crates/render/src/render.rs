@@ -13,8 +13,10 @@ pub fn render(data: InvoiceInputDataToTypst) -> Result<Pdf> {
     let typst_object_str = to_typst_let(&data);
     // Create a "World" (environment/context) for Typst compilation.
     // let world = MinimalWorld::with_string_literal(source_text);
-    let world =
-        MinimalWorld::with_path(Path::new("./crates/render/src/invoice.typ"), typst_object_str)?;
+    let world = MinimalWorld::with_path(
+        Path::new("./crates/render/src/invoice.typ"),
+        typst_object_str,
+    )?;
 
     // Compile the Typst source into a PagedDocument (layouted pages).
     let compile_result = typst::compile::<PagedDocument>(&world);

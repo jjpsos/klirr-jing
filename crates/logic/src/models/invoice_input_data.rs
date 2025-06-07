@@ -1,14 +1,22 @@
 use crate::prelude::*;
 
-pub type InvoiceInputData = InvoiceInputDataAbstract<LineItemsWithoutCost>;
-pub type InvoiceInputDataToTypst = InvoiceInputDataAbstract<LineItemsFlat>;
+pub type InvoiceInputData =
+    InvoiceInputDataAbstract<InvoiceInformationWithoutDueDate, LineItemsWithoutCost>;
+
+pub type InvoiceInputDataToTypst =
+    InvoiceInputDataAbstract<InvoiceInformationWithDueDate, LineItemsFlat>;
 
 impl InvoiceInputData {
-    pub fn to_typst(self, exchange_rates: ExchangeRates) -> Result<InvoiceInputDataToTypst> {
+    pub fn to_typst(self, exchange_rates_map: ExchangeRatesMap) -> Result<InvoiceInputDataToTypst> {
+        let exchange_rates = ExchangeRates::builder()
+            .rates(exchange_rates_map)
+            .target_currency(*self.payment_info().currency())
+            .build();
         let line_items = LineItemsFlat::try_from((self.line_items, exchange_rates))?;
+        let information_with_due_date = InvoiceInformationWithDueDate::from(self.information);
         Ok(InvoiceInputDataToTypst {
             line_items,
-            information: self.information,
+            information: information_with_due_date,
             vendor: self.vendor,
             client: self.client,
             payment_info: self.payment_info,
@@ -19,11 +27,11 @@ impl InvoiceInputData {
 /// The input data for the invoice, which includes information about the invoice,
 /// the vendor, and the client and the products/services included in the invoice.
 #[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
-pub struct InvoiceInputDataAbstract<Items: Serialize> {
+pub struct InvoiceInputDataAbstract<Info: Serialize, Items: Serialize> {
     /// Information about this specific invoice.
     #[builder(setter(into))]
     #[getset(get = "pub")]
-    information: InvoiceInformation,
+    information: Info,
 
     /// The company that issued the invoice, the vendor/seller/supplier/issuer.
     #[builder(setter(into))]
@@ -79,11 +87,12 @@ impl InvoiceInputData {
     pub fn sample() -> Self {
         InvoiceInputData::builder()
             .information(
-                InvoiceInformation::builder()
-                    .identifier("INV-2025-001")
+                InvoiceInformationWithoutDueDate::builder()
+                    .identifier("INV-9876")
                     .purchase_order("PO-12345")
                     .date(Date::builder().year(2025).month(5).day(31).build())
                     .terms(PaymentTerms::net30())
+                    .footer_text("Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.")
                     .build(),
             )
             .client(
@@ -127,17 +136,31 @@ impl InvoiceInputData {
             )
             .line_items(vec![
                 ItemWithoutCost::builder()
-                    .name("Consulting services")
+                    .name("Breakfast")
+                    .transaction_date(Date::builder().year(2025).month(5).day(20).build())
+                    .quantity(1.0)
+                    .unit_price(145.0)
+                    .currency(Currency::SEK)
+                    .build(),
+                ItemWithoutCost::builder()
+                    .name("Coffee")
                     .transaction_date(Date::builder().year(2025).month(5).day(31).build())
-                    .quantity(10.0)
-                    .unit_price(50.0)
+                    .quantity(2.0)
+                    .unit_price(4.0)
+                    .currency(Currency::GBP)
+                    .build(),
+                ItemWithoutCost::builder()
+                    .name("Sandwich")
+                    .transaction_date(Date::builder().year(2025).month(5).day(31).build())
+                    .quantity(1.0)
+                    .unit_price(7.0)
                     .currency(Currency::GBP)
                     .build(),
             ])
             .payment_info(
                 PaymentInformation::builder()
                     .bank_name("SEB")
-                    .iban("SE3550000000054910000003")
+                    .iban("SE21 9000 0123 9876 5432 1009")
                     .bic("ESSESESS")
                     .currency(Currency::EUR)
                     .build(),

@@ -9,6 +9,7 @@ edition = "2024"
 
 # External dependencies
 thiserror.workspace = true
+chrono.workspace = true
 derive_more.workspace = true
 log.workspace = true
 indoc = "2.0.6"

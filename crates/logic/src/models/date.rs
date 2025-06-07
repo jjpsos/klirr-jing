@@ -5,7 +5,16 @@ use crate::prelude::*;
 /// A date relevant for the invoice, e.g. invoice date, due date or a transaction
 /// date for an expense.
 #[derive(
-    Clone, Copy, Debug, Display, SerializeDisplay, DeserializeFromStr, TypedBuilder, Getters,
+    Clone,
+    Copy,
+    Debug,
+    Display,
+    PartialEq,
+    Eq,
+    SerializeDisplay,
+    DeserializeFromStr,
+    TypedBuilder,
+    Getters,
 )]
 #[display("{year:04}-{month:02}-{day:02}")]
 pub struct Date {

@@ -60,7 +60,7 @@ fn to_typst_value(value: &Value, indent: usize) -> String {
                 .collect::<Vec<_>>()
                 .join(",\n");
 
-            format!("[\n{},\n{}]", items, indent_str)
+            format!("(\n{},\n{})", items, indent_str)
         }
 
         Value::String(s) => format!("\"{}\"", s),
@@ -76,7 +76,12 @@ mod tests {
 
     #[test]
     fn test_to_typst_let() {
-        let input = InvoiceInputData::sample();
+        let input = InvoiceInputData::sample()
+            .to_typst(ExchangeRatesMap::from_iter([
+                (Currency::GBP, UnitPrice::from(1.174)),
+                (Currency::SEK, UnitPrice::from(11.05)),
+            ]))
+            .unwrap();
         let typst = to_typst_let(&input);
         let expected = include_str!("./fixtures/expected_input.typ");
         pretty_assertions::assert_eq!(typst, expected);

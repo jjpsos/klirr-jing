@@ -4,11 +4,11 @@ use crate::prelude::*;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PaymentTerms {
     /// Net payment due in a specific number of days, e.g. `Net(30)`
-    Net(u8),
+    Net(Day),
 }
 
 impl PaymentTerms {
     pub fn net30() -> Self {
-        PaymentTerms::Net(30)
+        PaymentTerms::Net(Day::from(30))
     }
 }

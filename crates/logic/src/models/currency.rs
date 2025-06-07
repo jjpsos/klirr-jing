@@ -95,7 +95,7 @@ impl<'de> Deserialize<'de> for Currency {
     {
         struct CurrencyVisitor;
 
-        impl<'de> Visitor<'de> for CurrencyVisitor {
+        impl Visitor<'_> for CurrencyVisitor {
             type Value = Currency;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

@@ -116,7 +116,7 @@ impl World for MinimalWorld {
     }
 
     fn book(&self) -> &LazyHash<FontBook> {
-        &self.environment().book()
+        self.environment().book()
     }
 
     fn main(&self) -> FileId {

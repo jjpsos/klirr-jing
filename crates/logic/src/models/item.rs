@@ -28,6 +28,7 @@ pub struct ItemWithoutCost {
 #[derive(Clone, Debug, Serialize, Deserialize, Deref, From, Getters, TypedBuilder)]
 pub struct ItemWithCost {
     #[deref]
+    #[serde(flatten)]
     without_cost: ItemWithoutCost,
 
     /// The total cost of the item, calculated as `unit_price * quantity`

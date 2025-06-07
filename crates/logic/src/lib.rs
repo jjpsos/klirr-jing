@@ -11,6 +11,7 @@ pub mod prelude {
     pub use crate::prepare_input_data::*;
     pub use crate::serde_to_typst::*;
 
+    pub use chrono::{DateTime, Local};
     pub use derive_more::{AsRef, Deref, Display, From};
     pub use getset::Getters;
     pub use log::{debug, error, info, trace, warn};

@@ -1558,6 +1558,7 @@ dependencies = [
 name = "invoice-typst-logic"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "derive_more",
  "getset",
  "indoc",

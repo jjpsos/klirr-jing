@@ -4,13 +4,13 @@ use crate::prelude::*;
 
 /// Response has format:
 /// ```no_run
-///  {
-///      "amount": 1.0,
-///      "base": "GBP",
-///      "date": "2025-04-30",
-///      "rates": {
-/// 		    "EUR": 1.174
-/// 	    }
+/// {
+///   "amount": 1.0,
+///   "base": "GBP",
+///   "date": "2025-04-30",
+///   "rates": {
+///     "EUR": 1.174
+///   }
 ///  }
 /// ```
 /// as given by `curl -s "https://api.frankfurter.app/2025-05-01?from=GBP&to=EUR"`
@@ -18,29 +18,6 @@ use crate::prelude::*;
 struct FrankfurterApiResponse {
     #[getset(get = "pub")]
     rates: HashMap<Currency, f64>,
-}
-
-#[cfg(test)]
-mod tests_frankfurter_api {
-    use super::*;
-
-    #[test]
-    fn test_frankfurter_api_response() {
-        let response = r#"{
-            "amount": 1.0,
-            "base": "GBP",
-            "date": "2025-04-30",
-            "rates": {
-                "EUR": 1.174
-            }
-        }"#;
-
-        let parsed: FrankfurterApiResponse = serde_json::from_str(response).unwrap();
-        assert_eq!(
-            parsed.rates.get(&Currency::EUR).unwrap().to_string(),
-            "1.174"
-        );
-    }
 }
 
 /// Makes blocking requests to the Frankfurter API to get the exchange rate
@@ -79,9 +56,9 @@ fn get_exchange_rate(date: Date, from: Currency, to: Currency) -> Result<UnitPri
         })
 }
 
-fn get_exchange_rates_if_needed(
-    items: &LineItemsWithoutCost,
-) -> Result<HashMap<Currency, UnitPrice>> {
+pub type ExchangeRatesMap = HashMap<Currency, UnitPrice>;
+
+pub fn get_exchange_rates_if_needed(items: &LineItemsWithoutCost) -> Result<ExchangeRatesMap> {
     let Ok(expenses) = items.clone().try_unwrap_expenses() else {
         debug!("No expenses found, skipping exchange rate fetching.");
         return Ok(HashMap::default());
@@ -90,26 +67,35 @@ fn get_exchange_rates_if_needed(
     let mut rates = HashMap::new();
     for expense in expenses {
         let from = *expense.currency();
-        if !rates.contains_key(&from) {
+        if let std::collections::hash_map::Entry::Vacant(e) = rates.entry(from) {
             let to = *expense.currency();
             let date = *expense.transaction_date();
             let rate = get_exchange_rate(date, from, to)?;
-            rates.insert(from, rate);
+            e.insert(rate);
         }
     }
     Ok(rates)
 }
 
-pub fn prepare_invoice_input_data() -> Result<InvoiceInputDataToTypst> {
-    // Prepare the data for the Typst source.
-    // This is a placeholder function, you can add your own logic here.
-    info!("Preparing invoice input data for PDF generation...");
-    let input = InvoiceInputData::sample();
-    let exchange_rates = get_exchange_rates_if_needed(input.line_items())?;
-    let exchange_rates = ExchangeRates::builder()
-        .target_currency(input.payment_info().currency().clone())
-        .rates(exchange_rates)
-        .build();
-    let input = input.to_typst(exchange_rates)?;
-    Ok(input)
+#[cfg(test)]
+mod tests_frankfurter_api {
+    use super::*;
+
+    #[test]
+    fn test_frankfurter_api_response() {
+        let response = r#"{
+            "amount": 1.0,
+            "base": "GBP",
+            "date": "2025-04-30",
+            "rates": {
+                "EUR": 1.174
+            }
+        }"#;
+
+        let parsed: FrankfurterApiResponse = serde_json::from_str(response).unwrap();
+        assert_eq!(
+            parsed.rates.get(&Currency::EUR).unwrap().to_string(),
+            "1.174"
+        );
+    }
 }
