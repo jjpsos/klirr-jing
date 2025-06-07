@@ -10,7 +10,6 @@
       street_address: (
         line_1: "221B Baker Street",
         line_2: "",
-        line_3: "",
       ),
       zip: "NW1 6XE",
     ),
@@ -44,6 +43,11 @@
       ),
     ],
   ),
+  payment_info: (
+    bank_name: "SEB",
+    bic: "ESSESESS",
+    iban: "SE3550000000054910000003",
+  ),
   vendor: (
     company_name: "Bra Detektiv AB",
     contact_person: "Ture Sventon",
@@ -54,7 +58,6 @@
       street_address: (
         line_1: "Storgatan 45",
         line_2: "4 tr",
-        line_3: "Apt 12",
       ),
       zip: "114 32",
     ),

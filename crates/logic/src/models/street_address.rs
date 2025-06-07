@@ -7,12 +7,10 @@ pub struct StreetAddress {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     line_1: String,
+    
     /// The street address line 2, of the company, e.g. `"C/o Other company"`.
     #[builder(setter(into), default = "".to_owned())]
     #[getset(get = "pub")]
     line_2: String,
-    /// The street address line 3, of the company, e.g. `"2nd floor"`.
-    #[builder(setter(into), default = "".to_owned())]
-    #[getset(get = "pub")]
-    line_3: String,
+
 }

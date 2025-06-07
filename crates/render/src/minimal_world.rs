@@ -2,7 +2,6 @@ use crate::prelude::*;
 
 use chrono::{DateTime, Datelike, FixedOffset, Local};
 use invoice_typst_logic::prelude::TypedBuilder;
-use serde_json::de;
 use std::path::Path;
 use typst::{
     Library, World,
@@ -121,31 +120,15 @@ impl World for MinimalWorld {
     }
 
     fn main(&self) -> FileId {
-        let main_id = self.content().ui().id();
-        debug!(
-            "Using main file with id: {:?}, contents:\n{}",
-            main_id,
-            self.content().ui().text()
-        );
-        main_id
+        self.content().ui().id()
     }
 
     fn source(&self, id: FileId) -> typst::diag::FileResult<Source> {
         if id == self.main() {
             let source = self.content().ui().clone();
-            debug!(
-                "Loaded source with id: {:?}, contents:\n{}",
-                id,
-                source.text()
-            );
             Ok(source)
         } else if id == self.content.data().id() {
             let source = self.content().data().clone();
-            debug!(
-                "Loaded source with id: {:?}, contents:\n{}",
-                id,
-                source.text()
-            );
             Ok(source)
         } else {
             panic!(
@@ -157,15 +140,6 @@ impl World for MinimalWorld {
     }
 
     fn file(&self, _id: FileId) -> typst::diag::FileResult<Bytes> {
-        /*
-            assert!(id.package().is_none());
-        Ok(Bytes::new(
-            typst_dev_assets::get_by_name(
-                &id.vpath().as_rootless_path().to_string_lossy(),
-            )
-            .unwrap_or_else(|| panic!("failed to load {:?}", id.vpath())),
-        ))
-        */
         panic!("File access not implemented in this minimal example")
     }
 

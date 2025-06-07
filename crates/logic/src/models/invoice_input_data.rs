@@ -1,16 +1,18 @@
 use crate::prelude::*;
 
-pub type InvoiceInputData = InvoiceInputDataAbstract<LineItems>;
+pub type InvoiceInputData = InvoiceInputDataAbstract<LineItemsWithoutCost>;
 pub type InvoiceInputDataToTypst = InvoiceInputDataAbstract<LineItemsFlat>;
 
 impl InvoiceInputData {
-    pub fn to_typst(self) -> InvoiceInputDataToTypst {
-        InvoiceInputDataToTypst {
+    pub fn to_typst(self, exchange_rates: ExchangeRates) -> Result<InvoiceInputDataToTypst> {
+        let line_items = LineItemsFlat::try_from((self.line_items, exchange_rates))?;
+        Ok(InvoiceInputDataToTypst {
+            line_items,
             information: self.information,
             vendor: self.vendor,
             client: self.client,
-            line_items: self.line_items.into(),
-        }
+            payment_info: self.payment_info,
+        })
     }
 }
 
@@ -37,6 +39,39 @@ pub struct InvoiceInputDataAbstract<Items: Serialize> {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     line_items: Items,
+
+    /// Payment information for the vendor, used for international transfers.
+    /// This includes the IBAN, bank name, and BIC.
+    /// This is used to ensure that the client can pay the invoice correctly.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    payment_info: PaymentInformation,
+}
+
+/// Bank account details for the vendor, used for international transfers.
+/// This includes the IBAN, bank name, and BIC.
+/// This is used to ensure that the client can pay the invoice correctly.
+#[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
+pub struct PaymentInformation {
+    /// The IBAN (International Bank Account Number) of the vendor's bank account,
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    iban: String,
+
+    /// The name of the vendor's bank, used for international transfers.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    bank_name: String,
+
+    /// The BIC (Bank Identifier Code) of the vendor's bank, used for international
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    bic: String,
+
+    /// The currency of this invoice, e.g. `EUR`
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    currency: Currency,
 }
 
 impl InvoiceInputData {
@@ -48,7 +83,6 @@ impl InvoiceInputData {
                     .identifier("INV-2025-001")
                     .purchase_order("PO-12345")
                     .date(Date::builder().year(2025).month(5).day(31).build())
-                    .currency(Currency::EUR)
                     .terms(PaymentTerms::net30())
                     .build(),
             )
@@ -83,7 +117,6 @@ impl InvoiceInputData {
                                 StreetAddress::builder()
                                     .line_1("Storgatan 45")
                                     .line_2("4 tr")
-                                    .line_3("Apt 12")
                                     .build(),
                             )
                             .zip("114 32")
@@ -93,14 +126,22 @@ impl InvoiceInputData {
                     .build(),
             )
             .line_items(vec![
-                Item::builder()
+                ItemWithoutCost::builder()
                     .name("Consulting services")
                     .transaction_date(Date::builder().year(2025).month(5).day(31).build())
                     .quantity(10.0)
                     .unit_price(50.0)
-                    .currency(Currency::EUR)
+                    .currency(Currency::GBP)
                     .build(),
             ])
+            .payment_info(
+                PaymentInformation::builder()
+                    .bank_name("SEB")
+                    .iban("SE3550000000054910000003")
+                    .bic("ESSESESS")
+                    .currency(Currency::EUR)
+                    .build(),
+            )
             .build()
     }
 }

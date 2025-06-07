@@ -14,6 +14,11 @@ InvoiceInputData(
     terms: Net(30),
     currency: "EUR",
   ),
+  payment_info: (
+    bank_name: "SEB",
+    bic: "ESSESESS",
+    iban: "SE3550000000054910000003",
+  ),
   vendor: CompanyInformation(
     contact_person: Some("Ture Sventon"),
     organisation_number: "556123-4567",
@@ -22,7 +27,6 @@ InvoiceInputData(
       street_address: StreetAddress(
         line_1: "Storgatan 45",
         line_2: "4 tr",
-        line_3: "Apt 12",
       ),
       zip: "114 32",
       country: "Sweden",
@@ -38,7 +42,6 @@ InvoiceInputData(
       street_address: StreetAddress(
         line_1: "221B Baker Street",
         line_2: "",
-        line_3: "",
       ),
       zip: "NW1 6XE",
       country: "England",

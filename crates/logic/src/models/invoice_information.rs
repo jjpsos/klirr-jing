@@ -22,8 +22,5 @@ pub struct InvoiceInformation {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     terms: PaymentTerms,
-    /// The currency of this invoice, e.g. `EUR`
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    currency: Currency,
+
 }
