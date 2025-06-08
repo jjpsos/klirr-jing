@@ -28,6 +28,7 @@ impl Default for Environment {
         let lib = Library::builder().build();
         // Search for fonts (includes Typst default fonts if embed feature enabled).
         let fonts_data = FontSearcher::new().search();
+
         // Get the current local date and time
         let now = Local::now();
 
@@ -144,7 +145,12 @@ impl World for MinimalWorld {
     }
 
     fn font(&self, index: usize) -> Option<Font> {
-        self.environment().fonts.get(index)?.get()
+        if let Some(font) = self.environment().fonts.get(index)?.get() {
+            trace!("Using font @{} => {:?}", index, font.info().family);
+            Some(font)
+        } else {
+            panic!("Font not found")
+        }
     }
 
     fn today(&self, offset: Option<i64>) -> Option<Datetime> {

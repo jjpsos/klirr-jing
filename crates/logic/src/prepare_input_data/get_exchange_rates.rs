@@ -63,7 +63,10 @@ pub fn get_exchange_rates_if_needed(items: &LineItemsWithoutCost) -> Result<Exch
         debug!("No expenses found, skipping exchange rate fetching.");
         return Ok(HashMap::default());
     };
-    debug!("Fetching exchanges rates for #{} expenses", expenses.len());
+    debug!(
+        "☑️ Fetching exchanges rates for #{} expenses...",
+        expenses.len()
+    );
     let mut rates = HashMap::new();
     for expense in expenses {
         let from = *expense.currency();
@@ -74,6 +77,7 @@ pub fn get_exchange_rates_if_needed(items: &LineItemsWithoutCost) -> Result<Exch
             e.insert(rate);
         }
     }
+    debug!("✅ Fetched exchanges rates for #{} expenses.", rates.len());
     Ok(rates)
 }
 

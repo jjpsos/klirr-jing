@@ -26,7 +26,6 @@
 #let footer_text = invoice.information.footer_text
 #let line_items = invoice.line_items.expenses
 
-
 // ** Client Data Variables **
 #let client_name = invoice.client.company_name
 #let client_addr_line1 = invoice.client.postal_address.street_address.line_1
@@ -73,8 +72,52 @@
   without_currency + currency
 }
 
+#let display_if_non_empty(value) = {
+  if value != "" {
+    value
+  }
+}
 
-#set text(size: 14pt, weight: "bold")
+#let footnotesize(content) = {
+  set text(size: 10pt)
+  content
+}
+
+#let small(content) = {
+  set text(size: 11pt)
+  content
+}
+
+#let normalsize(content) = {
+  set text(size: 12pt)
+  content
+}
+
+#let large(content) = {
+  set text(size: 14pt)
+  content
+}
+
+#let Large(content) = {
+  set text(size: 17pt)
+  content
+}
+
+#let LARGE(content) = {
+  set text(size: 20pt)
+  content
+}
+
+#let huge(content) = {
+  set text(size: 25pt)
+  content
+}
+
+#let Huge(content) = {
+  set text(size: 30pt)
+  content
+}
+
 
 // Page setup: A4 paper, custom margins, and footer for contact details
 #set page(
@@ -84,31 +127,51 @@
     #footer_text
   ],
 )
+#set text(font: "Helvetica Neue", size: 12pt)
 
-// ** Invoice Header Section **
-= #vendor_company_name
+#grid(
+  columns: (1fr, 1fr), // Two columns of equal width
+  gutter: 10pt, // Space between blocks
+  // Recipient address block
+  block(
+    fill: none,
+    inset: 10pt,
+    stroke: none,
+    width: 100%,
+    [
+      // ** Invoice Header Section **
+      #huge[
+        #vendor_company_name
+      ]
 
-#set text(size: 11pt, weight: "regular")
+      #text("To:", weight: "bold")\
+      #client_name\
+      #client_addr_line1\
+      #display_if_non_empty(client_addr_line2)
+      #client_city, #client_country\
+      #client_zip\
+      \
+      #text("VAT:", weight: "bold")\
+      #client_vat
+    ],
+  ),
+  block(
+    fill: none,
+    inset: 10pt,
+    stroke: none,
+    width: 100%,
+    [
+      // align the following block to the right margin
+      Invoice no: *#invoice_no* \
+      Invoice date: #invoice_date \
+      Due date: #due_date \
+      For the attention of *#client_attention* \
+      *Our reference:* #our_reference \
+      *Terms:* Net #payment_terms
+    ],
+  )
+)
 
-// Recipient address block
-#align(left)[
-  *To:*\
-  #client_name\
-  #client_addr_line1\
-  #client_addr_line2
-  *VAT*:\
-  #client_vat
-]
-
-#align(right)[
-  // align the following block to the right margin
-  Invoice no: *#invoice_no* \
-  Invoice date: #invoice_date \
-  Due date: #due_date \
-  For the attention of *#client_attention* \
-  Our reference: #our_reference \
-  Terms: Net #payment_terms
-]
 
 // ** Invoice Items Table **
 #double-line()
