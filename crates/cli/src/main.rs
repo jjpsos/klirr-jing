@@ -1,7 +1,10 @@
 mod init_logging;
 
 use invoice_typst_render::prelude::*;
-use std::{borrow::Cow, path::PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 /// Saves the PDF file to the specified path.
 fn save_pdf(pdf: Pdf, pdf_name: Cow<str>) -> Result<PathBuf> {
@@ -18,7 +21,7 @@ fn save_pdf(pdf: Pdf, pdf_name: Cow<str>) -> Result<PathBuf> {
 /// Compile the Typst source into a PDF and safe it at the specified path.
 fn create_pdf<'s>(pdf_name: impl Into<Cow<'s, str>>) -> Result<PathBuf> {
     let data = prepare_invoice_input_data()?;
-    let pdf = render(data)?;
+    let pdf = render(data, Path::new("./crates/render/src/invoice.typ"))?;
     save_pdf(pdf, pdf_name.into())
 }
 

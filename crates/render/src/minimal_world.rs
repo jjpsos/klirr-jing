@@ -58,7 +58,7 @@ pub struct MinimalWorld {
 }
 
 trait LoadSource: Sized {
-    fn load_source_at(path: &Path) -> Result<Self>;
+    fn load_source_at(path: impl AsRef<Path>) -> Result<Self>;
 }
 
 trait InlineSource: Sized {
@@ -75,7 +75,8 @@ impl InlineSource for Source {
 }
 
 impl LoadSource for Source {
-    fn load_source_at(path: &Path) -> Result<Self> {
+    fn load_source_at(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref();
         // Create a new FileId for the virtual main file ("/main.typ").
         let file_id = FileId::new(None, VirtualPath::new(path));
         // Read the Typst source from the file.
@@ -103,7 +104,7 @@ impl MinimalWorld {
         }
     }
 
-    pub fn with_path(path_to_ui: &Path, data_inline: String) -> Result<Self> {
+    pub fn with_path(path_to_ui: impl AsRef<Path>, data_inline: String) -> Result<Self> {
         Ok(Self::new(
             Source::load_source_at(path_to_ui)?,
             Source::inline(data_inline, "/crates/render/src/input.typ")?,

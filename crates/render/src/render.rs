@@ -1,4 +1,6 @@
 use std::path::Path;
+#[cfg(test)]
+use std::path::PathBuf;
 
 use crate::prelude::*;
 use invoice_typst_logic::prelude::to_typst_let;
@@ -6,20 +8,19 @@ use typst::layout::PagedDocument;
 use typst_pdf::PdfOptions;
 use typst_pdf::pdf;
 
-pub fn render(data: InvoiceInputDataToTypst) -> Result<Pdf> {
+pub fn render(data: InvoiceInputDataToTypst, path_to_ui: impl AsRef<Path>) -> Result<Pdf> {
     let typst_object_str = to_typst_let(&data);
-    // Create a "World" (environment/context) for Typst compilation.
-    let path_to_ui = Path::new("./crates/render/src/invoice.typ");
     let data_count = typst_object_str.len();
 
     debug!("☑️ Creating typst 'World' (environment/context), this usually takes ~2 seconds.");
-    let world = MinimalWorld::with_path(path_to_ui, typst_object_str)?;
+    let world = MinimalWorld::with_path(path_to_ui.as_ref(), typst_object_str)?;
     debug!("✅ Created typst 'World' (environment/context)");
 
     // Compile the Typst source into a PagedDocument (layouted pages).
     debug!(
         "☑️ Compiling typst source at: {:?} with data: #{} bytes",
-        path_to_ui, data_count
+        path_to_ui.as_ref(),
+        data_count
     );
     let compile_result = typst::compile::<PagedDocument>(&world);
     let doc = compile_result.output.map_err(|e| {
@@ -41,4 +42,184 @@ pub fn render(data: InvoiceInputDataToTypst) -> Result<Pdf> {
     // Convert the exported PDF bytes into a Pdf type.
     let pdf = Pdf::from(pdf_bytes);
     Ok(pdf)
+}
+
+/// Resolves a path relative to the crate this function is defined in.
+///
+/// The base is the folder containing this crate’s `Cargo.toml`.
+#[cfg(test)]
+pub fn path_to_resource(relative: impl AsRef<Path>) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(relative)
+}
+
+#[cfg(test)]
+pub fn is_imagemagick_installed() -> bool {
+    // Try `magick` (modern) first
+    if std::process::Command::new("magick")
+        .arg("-version")
+        .output()
+        .is_ok()
+    {
+        return true;
+    }
+
+    // Fallback to `convert` (legacy)
+    if std::process::Command::new("convert")
+        .arg("-version")
+        .output()
+        .is_ok()
+    {
+        return true;
+    }
+
+    false
+}
+
+/// Resolves a path relative to the crate this function is defined in.
+///
+/// The base is the folder containing this crate’s `Cargo.toml`.
+#[cfg(test)]
+pub fn fixture(relative: impl AsRef<Path>) -> PathBuf {
+    path_to_resource("fixtures").join(relative)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Once;
+
+    use magick_rust::{LayerMethod, MagickWand, magick_wand_genesis};
+
+    use super::*;
+
+    use std::env;
+
+    fn running_in_ci() -> bool {
+        env::var("CI").is_ok()
+    }
+
+    #[test]
+    fn image_compare() {
+        assert!(
+            is_imagemagick_installed(),
+            "Imagemagick not installed, but required to run. `brew install imagemagick`"
+        );
+        let new_image = generate_pdf_into_png_image(path_to_resource("src/invoice.typ"));
+
+        let path_to_expected_image = fixture("expected.png");
+        let save_new_image_as_expected = |new_image: Vec<u8>| {
+            if !running_in_ci() {
+                // save newly produced image as expected.
+                std::fs::write(&path_to_expected_image, new_image)
+                    .inspect_err(|e| {
+                        panic!(
+                            "should be able to write image, got error: {:?}, when using path: {:?}",
+                            e, path_to_expected_image
+                        )
+                    })
+                    .unwrap();
+            }
+        };
+
+        let image_one = image::load_from_memory(&new_image)
+            .expect("Could convert new image bytes to image")
+            .into_rgb8();
+        let Ok(image_two) = image::open(&path_to_expected_image) else {
+            warn!(
+                "Failed to locate the expected image at {:?}, saving new image as expected (if not CI).",
+                path_to_expected_image
+            );
+            save_new_image_as_expected(new_image);
+            return;
+        };
+
+        let image_two = image_two.into_rgb8();
+        let comparison_result = image_compare::rgb_similarity_structure(
+            &image_compare::Algorithm::RootMeanSquared,
+            &image_one,
+            &image_two,
+        );
+        if let Err(failure) = comparison_result {
+            let msg = format!(
+                "Failed to compare images, did you change DPI or the image format? Image compare error: {:?}",
+                failure
+            );
+            save_new_image_as_expected(new_image);
+            panic!("{}, replacing expected image.", msg);
+        };
+        let similarity = comparison_result.expect("Already checked for error above");
+
+        if similarity.score != 1.0 {
+            save_new_image_as_expected(new_image);
+
+            panic!(
+                "Expected similarity to be 1.0, but was {}",
+                similarity.score
+            )
+        }
+    }
+
+    fn generate_pdf_into_png_image(invoice_ui_path: impl AsRef<Path>) -> Vec<u8> {
+        let data = prepare_invoice_input_data().unwrap();
+        let pdf = render(data, invoice_ui_path).unwrap();
+        convert_pdf_to_pngs(pdf.as_ref(), 85.0).expect("Should be able to convert")
+    }
+
+    static INIT: Once = Once::new();
+
+    use std::error::Error;
+
+    /// Converts PDF bytes to a single PNG image, with a white background and correct size.
+    ///
+    /// # Arguments
+    /// * `pdf_bytes` - A slice of bytes representing the PDF file.
+    /// * `dpi` - Resolution in dots per inch (e.g., 300 for high quality)
+    ///
+    /// # Returns
+    /// Result containing the number of pages converted or an error.
+    fn convert_pdf_to_pngs(pdf_bytes: &[u8], dpi: f64) -> Result<Vec<u8>, Box<dyn Error>> {
+        // Initialize MagickWand environment once
+        INIT.call_once(|| {
+            magick_wand_genesis();
+        });
+
+        // Create a new MagickWand instance
+        let mut wand = MagickWand::new();
+
+        // Set resolution before reading the PDF (e.g., 300 DPI for better quality)
+        wand.set_resolution(dpi, dpi)?;
+
+        // Read PDF bytes into the wand
+        wand.read_image_blob(pdf_bytes)?;
+
+        // Get the number of pages
+        let num_pages = wand.get_number_images();
+
+        assert_eq!(num_pages, 1);
+
+        // Set the current image in the sequence
+        wand.set_iterator_index(0)?;
+
+        // Get page dimensions (in pixels, based on DPI)
+        let width = wand.get_image_width();
+        let height = wand.get_image_height();
+
+        // Set the background color to white
+        let mut background = magick_rust::PixelWand::new();
+        background.set_color("white")?;
+        wand.set_image_background_color(&background)?;
+
+        // Extend the canvas to ensure the background covers the full area
+        wand.extend_image(width, height, 0, 0)?;
+
+        // Flatten the image to apply the white background
+        wand.merge_image_layers(LayerMethod::Flatten)?;
+
+        // Set the output format to PNG
+        wand.set_format("PNG")?;
+
+        // Get the image blob (PNG data)
+        let png_data = wand.write_image_blob("PNG")?;
+
+        Ok(png_data)
+    }
 }
