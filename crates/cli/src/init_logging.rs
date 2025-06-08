@@ -52,7 +52,12 @@ pub(crate) fn init_logging_with_level(log_level: log::LevelFilter) {
 }
 
 fn parse_log_level_from_str(log_level: &str) -> log::LevelFilter {
-    log::LevelFilter::from_str(log_level).expect("Invalid log level set with `{rust_log_env}`")
+    log::LevelFilter::from_str(log_level).unwrap_or_else(|_| {
+        panic!(
+            "Invalid log level set with `{}`, got: {}",
+            RUST_LOG_ENV, log_level
+        )
+    })
 }
 
 fn init_logging_with_level_str(log_level: &str) {

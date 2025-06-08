@@ -127,7 +127,7 @@
     #footer_text
   ],
 )
-#set text(font: "Helvetica Neue", size: 12pt)
+#set text(font: "CMU Serif", size: 12pt)
 
 #grid(
   columns: (1fr, 1fr), // Two columns of equal width
@@ -222,6 +222,6 @@
   [#vendor_company_name], [#iban], [#org_no],
   [#vendor_addr_line1], [*Bank:*], [*VAT. No.*],
   [#vendor_addr_line2], [#bank_name], [#vat_no],
-  [#vendor_zip], [#vendor_city], [*BIC:*], [],
+  [#vendor_zip, #vendor_city], [*BIC:*], [],
   [#vendor_country], [#bic], []
 )

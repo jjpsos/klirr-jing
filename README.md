@@ -1,4 +1,21 @@
-# Development
+# Installation
+
+## Font
+
+```sh
+brew tap homebrew/cask-fonts
+brew install --cask font-computer-modern
+```
+
+## This CLI tool
+
+Clone and run:
+
+```sh
+make
+```
+
+## Development
 
 ## Precommit
 
