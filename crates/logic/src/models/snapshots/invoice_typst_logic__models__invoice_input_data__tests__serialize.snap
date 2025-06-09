@@ -4,7 +4,7 @@ expression: "InvoiceInputData::sample()"
 ---
 InvoiceInputData(
   information: InvoiceInformation(
-    identifier: "INV-2025-001",
+    number: 237,
     purchase_order: "PO-12345",
     date: Date(
       year: Year(2025),

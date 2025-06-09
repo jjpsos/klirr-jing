@@ -1,7 +1,11 @@
+use derive_more::FromStr;
+
 use crate::prelude::*;
 
 /// The day of the month, e.g. 1 for the first day, 31 for the last day of a month.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Serialize, Deserialize, From, Deref)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Display, Serialize, Deserialize, From, Deref, FromStr,
+)]
 pub struct Day(u8);
 
 impl From<i32> for Day {

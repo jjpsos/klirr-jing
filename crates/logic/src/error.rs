@@ -6,6 +6,21 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// during PDF generation and manipulation.
 #[derive(Clone, Debug, ThisError)]
 pub enum Error {
+    /// Failed to parse PaymentTerms NetDays from a string, e.g. when the format is incorrect.
+    #[error("Failed to PaymentTerms NetDays from string: {invalid_string}")]
+    FailedToParsePaymentTermsNetDays { invalid_string: String },
+
+    /// Failed to find the localization file for a specific locale.
+    #[error("Failed to find the localization file for locale: {locale}")]
+    L18nNotFound {
+        /// The locale that was not found, e.g. "en" for English.
+        locale: String,
+    },
+
+    /// Failed to parse a string into a Hexcolor
+    #[error("Invalid hex color format: {invalid_string}")]
+    InvalidHexColor { invalid_string: String },
+
     /// Failed to parse a date, e.g. when the format is incorrect or the date is invalid.
     #[error("Failed to parse date, because: {underlying}")]
     FailedToParseDate { underlying: String },

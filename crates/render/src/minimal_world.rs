@@ -41,18 +41,33 @@ impl Default for Environment {
     }
 }
 
+/// The typst source files used to render the invoices layout and data.
 #[derive(Debug, Getters, TypedBuilder)]
 pub struct Content {
+    /// The static invoice typst file with the layout
+    #[getset(get = "pub")]
+    layout: Source,
+
+    /// The localization file for the invoice, used for
+    /// translations of all static text elements.
+    #[getset(get = "pub")]
+    l18n: Source,
+
+    /// The data source for the invoice, which contains
+    /// the dynamic data to be rendered in the invoice,
+    /// such as vendor and client information, items, and totals.
     #[getset(get = "pub")]
     data: Source,
-    #[getset(get = "pub")]
-    ui: Source,
 }
 
+/// A typst context called a "world" that contains the necessary
+/// sources and environment to render an invoice.
 #[derive(Debug, Getters)]
 pub struct MinimalWorld {
+    /// The typst source files used to render the invoices layout and data.
     #[getset(get = "pub")]
     content: Content,
+    /// The environment containing the library, font book, and current time.
     #[getset(get = "pub")]
     environment: Environment,
 }
@@ -94,8 +109,12 @@ impl LoadSource for Source {
 }
 
 impl MinimalWorld {
-    fn new(ui: Source, data: Source) -> Self {
-        let content = Content::builder().data(data).ui(ui).build();
+    fn new(layout: Source, l18n: Source, data: Source) -> Self {
+        let content = Content::builder()
+            .data(data)
+            .layout(layout)
+            .l18n(l18n)
+            .build();
         let environment = Environment::default();
 
         Self {
@@ -104,9 +123,16 @@ impl MinimalWorld {
         }
     }
 
-    pub fn with_path(path_to_ui: impl AsRef<Path>, data_inline: String) -> Result<Self> {
+    pub fn with_path(
+        layout_path: impl AsRef<Path>,
+        l18n_inline: String,
+        data_inline: String,
+    ) -> Result<Self> {
         Ok(Self::new(
-            Source::load_source_at(path_to_ui)?,
+            Source::load_source_at(layout_path)?,
+            // Virtual path MUST match the first lines inside `invoice.typ` file.
+            Source::inline(l18n_inline, "/crates/render/src/l18n.typ")?,
+            // Virtual path MUST match the first lines inside `invoice.typ` file.
             Source::inline(data_inline, "/crates/render/src/input.typ")?,
         ))
     }
@@ -122,22 +148,21 @@ impl World for MinimalWorld {
     }
 
     fn main(&self) -> FileId {
-        self.content().ui().id()
+        self.content().layout().id()
     }
 
     fn source(&self, id: FileId) -> typst::diag::FileResult<Source> {
-        if id == self.main() {
-            let source = self.content().ui().clone();
+        if id == self.content().layout().id() {
+            let source = self.content().layout().clone();
+            Ok(source)
+        } else if id == self.content.l18n().id() {
+            let source = self.content().l18n().clone();
             Ok(source)
         } else if id == self.content.data().id() {
             let source = self.content().data().clone();
             Ok(source)
         } else {
-            panic!(
-                "Only the main file is supported in this minimal example, got id: '{:?}' != {:?} (self.content.data.id())",
-                id,
-                self.content.data().id()
-            );
+            panic!("Unknown typst resource requested: '{:?}'", id);
         }
     }
 

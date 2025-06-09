@@ -2,11 +2,11 @@ use crate::prelude::*;
 use indoc::indoc;
 
 /// Converts any `Serialize`able Rust struct into Typst syntax.
-pub fn to_typst_let<T: Serialize>(data: &T) -> String {
-    let value = serde_json::to_value(data).expect("Serialization failed");
+pub fn to_typst_let<T: Serialize>(input: &T) -> String {
+    let value = serde_json::to_value(input).expect("Serialization failed");
     format!(
         indoc! {r#"
-        #let make_invoice() = {{
+        #let provide() = {{
           {}
         }}
         "#},
@@ -74,16 +74,48 @@ fn to_typst_value(value: &Value, indent: usize) -> String {
 mod tests {
     use super::*;
 
+    macro_rules! test_data_to_typst {
+        ($sample:expr, $expected:expr) => {{
+            let input = $sample
+                .to_partial(&YearAndMonth::builder().year(2025).month(5).build())
+                .to_typst(ExchangeRatesMap::from_iter([
+                    (Currency::GBP, UnitPrice::from(1.174)),
+                    (Currency::SEK, UnitPrice::from(11.05)),
+                ]))
+                .unwrap();
+            let typst = to_typst_let(&input);
+            pretty_assertions::assert_eq!(typst, $expected);
+        }};
+    }
+
+    macro_rules! test_l18n_to_typst {
+        ($input:expr, $expected:expr) => {{
+            let typst = to_typst_let($input.content());
+            pretty_assertions::assert_eq!(typst, $expected);
+        }};
+    }
+
     #[test]
-    fn test_to_typst_let() {
-        let input = InvoiceInputData::sample()
-            .to_typst(ExchangeRatesMap::from_iter([
-                (Currency::GBP, UnitPrice::from(1.174)),
-                (Currency::SEK, UnitPrice::from(11.05)),
-            ]))
-            .unwrap();
-        let typst = to_typst_let(&input);
-        let expected = include_str!("./fixtures/expected_input.typ");
-        pretty_assertions::assert_eq!(typst, expected);
+    fn sample_expenses_to_typst_macro() {
+        test_data_to_typst!(
+            InvoiceInputData::sample_expenses(),
+            include_str!("./fixtures/expected_input_expenses.typ")
+        );
+    }
+
+    #[test]
+    fn sample_services_to_typst_macro() {
+        test_data_to_typst!(
+            InvoiceInputData::sample_consulting_services(),
+            include_str!("./fixtures/expected_input_services.typ")
+        );
+    }
+
+    #[test]
+    fn l18n_english_to_typst_macro() {
+        test_l18n_to_typst!(
+            &L18n::english(),
+            include_str!("./fixtures/expected_l18n_english.typ")
+        );
     }
 }

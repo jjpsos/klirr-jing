@@ -18,17 +18,42 @@ fn save_pdf(pdf: Pdf, pdf_name: Cow<str>) -> Result<PathBuf> {
     Ok(output_path)
 }
 
+fn get_localization() -> Result<L18n> {
+    // Read the input data from a file or other source.
+    // This is a placeholder function, you can add your own logic here.
+    info!("☑️ Reading localisation data...");
+    warn!("Using sample data for demonstration purposes.");
+    let l18n = L18n::english();
+    Ok(l18n)
+}
+
+fn read_input_data() -> Result<InvoiceInputData> {
+    // Read the input data from a file or other source.
+    // This is a placeholder function, you can add your own logic here.
+    info!("☑️ Reading invoice input data...");
+    warn!("Using sample data for demonstration purposes.");
+    let input_data = InvoiceInputData::sample_consulting_services();
+    Ok(input_data)
+}
+
 /// Compile the Typst source into a PDF and safe it at the specified path.
-fn create_pdf<'s>(pdf_name: impl Into<Cow<'s, str>>) -> Result<PathBuf> {
-    let data = prepare_invoice_input_data()?;
-    let pdf = render(data, Path::new("./crates/render/src/invoice.typ"))?;
+fn create_pdf<'s>(
+    pdf_name: impl Into<Cow<'s, str>>,
+    target_month: YearAndMonth,
+) -> Result<PathBuf> {
+    let input_data = read_input_data()?;
+    let data = prepare_invoice_input_data(input_data, target_month)?;
+    let l18n = get_localization()?;
+    let pdf = render(Path::new("./crates/render/src/invoice.typ"), l18n, data)?;
     save_pdf(pdf, pdf_name.into())
 }
 
 fn main() {
     init_logging::init_logging();
+    let target_month = YearAndMonth::builder().year(2025).month(5).build();
+    warn!("Using hardcoded target month: {}", target_month);
     info!("🔮 Starting PDF creation...");
-    match create_pdf("output.pdf") {
+    match create_pdf("output.pdf", target_month) {
         Ok(path) => info!("✅ PDF created successfully at: {}", path.display()),
         Err(e) => error!("Error creating PDF: {}", e),
     }

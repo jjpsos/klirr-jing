@@ -8,18 +8,20 @@ edition = "2024"
 # NONE
 
 # External dependencies
-thiserror.workspace = true
 chrono.workspace = true
 derive_more.workspace = true
-log.workspace = true
-indoc = "2.0.6"
-typed-builder.workspace = true
 getset.workspace = true
-serde_json.workspace = true
-serde.workspace = true
-ron.workspace = true
-serde_with = "3.9"
+indexmap = { version = "2.9.0", features = ["serde"] }
+indoc = "2.0.6"
+lazy_static = "1.5.0"
+log.workspace = true
 reqwest = { version = "0.12.19", features = ["blocking", "json"] }
+ron.workspace = true
+serde_json.workspace = true
+serde_with = "3.9"
+serde.workspace = true
+thiserror.workspace = true
+typed-builder.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

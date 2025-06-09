@@ -1,11 +1,22 @@
 use std::collections::HashMap;
 
-use derive_more::TryUnwrap;
+use derive_more::{IsVariant, TryUnwrap};
 
 use crate::prelude::*;
 
+pub trait IsExpenses {
+    /// Returns true if this invoice is for expenses only.
+    fn is_expenses(&self) -> bool;
+}
+
+impl IsExpenses for LineItemsWithoutCost {
+    fn is_expenses(&self) -> bool {
+        self.is_expenses()
+    }
+}
+
 /// Services or expenses included in this invoice to be paid by the client.
-#[derive(Clone, Debug, Serialize, Deserialize, From, TryUnwrap)]
+#[derive(Clone, Debug, Serialize, Deserialize, From, TryUnwrap, IsVariant)]
 #[from(Vec<Item>, Item)]
 pub enum LineItemsWithoutCost {
     /// Service sold by the vendor to the client, e.g. `"App development"`
@@ -52,8 +63,8 @@ impl TryFrom<(LineItemsWithoutCost, ExchangeRates)> for LineItemsFlat {
                 let service =
                     service.converting_currency_and_calculating_total_cost(&exchange_rates)?;
                 let flat = LineItemsFlat::builder()
-                    .service(service)
-                    .expenses(vec![])
+                    .items(vec![service])
+                    .is_expenses(false)
                     .build();
                 Ok(flat)
             }
@@ -64,7 +75,10 @@ impl TryFrom<(LineItemsWithoutCost, ExchangeRates)> for LineItemsFlat {
                         expense.converting_currency_and_calculating_total_cost(&exchange_rates)
                     })
                     .collect::<Result<Vec<_>>>()?;
-                let flat = LineItemsFlat::builder().expenses(expenses).build();
+                let flat = LineItemsFlat::builder()
+                    .items(expenses)
+                    .is_expenses(true)
+                    .build();
                 Ok(flat)
             }
         }
@@ -73,15 +87,17 @@ impl TryFrom<(LineItemsWithoutCost, ExchangeRates)> for LineItemsFlat {
 
 #[derive(Clone, Debug, Serialize, Getters, TypedBuilder)]
 pub struct LineItemsFlat {
-    /// Service sold by the vendor to the client, e.g. `"App development"`,
-    /// might be `None` if no service is provided
-    #[builder(setter(into, strip_option), default = None)]
+    /// True if this invoice is for expenses only.
     #[getset(get = "pub")]
-    service: Option<ItemWithCost>,
+    is_expenses: bool,
 
-    /// Expense incurred by the vendor, travel expenses for a conference/summit/
-    /// retreat,
-    /// might be empty if no expenses are incurred
+    /// Either a single item (Serivec) or one or more expenses
     #[getset(get = "pub")]
-    expenses: Vec<ItemWithCost>,
+    items: Vec<ItemWithCost>,
+}
+
+impl IsExpenses for LineItemsFlat {
+    fn is_expenses(&self) -> bool {
+        self.is_expenses
+    }
 }

@@ -8,18 +8,23 @@ use typst::layout::PagedDocument;
 use typst_pdf::PdfOptions;
 use typst_pdf::pdf;
 
-pub fn render(data: InvoiceInputDataToTypst, path_to_ui: impl AsRef<Path>) -> Result<Pdf> {
-    let typst_object_str = to_typst_let(&data);
-    let data_count = typst_object_str.len();
+pub fn render(
+    layout_path: impl AsRef<Path>,
+    l18n: L18n,
+    data: InvoiceInputDataToTypst,
+) -> Result<Pdf> {
+    let l18n_typst_str = to_typst_let(&l18n.content());
+    let data_typst_str = to_typst_let(&data);
+    let data_count = data_typst_str.len();
 
     debug!("☑️ Creating typst 'World' (environment/context), this usually takes ~2 seconds.");
-    let world = MinimalWorld::with_path(path_to_ui.as_ref(), typst_object_str)?;
+    let world = MinimalWorld::with_path(layout_path.as_ref(), l18n_typst_str, data_typst_str)?;
     debug!("✅ Created typst 'World' (environment/context)");
 
     // Compile the Typst source into a PagedDocument (layouted pages).
     debug!(
         "☑️ Compiling typst source at: {:?} with data: #{} bytes",
-        path_to_ui.as_ref(),
+        layout_path.as_ref(),
         data_count
     );
     let compile_result = typst::compile::<PagedDocument>(&world);
@@ -98,14 +103,35 @@ mod tests {
     }
 
     #[test]
-    fn image_compare() {
+    fn test_sample_expenses() {
+        compare_image_against_expected(
+            InvoiceInputData::sample_expenses(),
+            fixture("expected_expenses.png"),
+        );
+    }
+
+    #[test]
+    fn test_sample_services() {
+        compare_image_against_expected(
+            InvoiceInputData::sample_consulting_services(),
+            fixture("expected_services.png"),
+        );
+    }
+
+    fn compare_image_against_expected(
+        sample: InvoiceInputData,
+        path_to_expected_image: impl AsRef<Path>,
+    ) {
         assert!(
             is_imagemagick_installed(),
             "Imagemagick not installed, but required to run. `brew install imagemagick`"
         );
-        let new_image = generate_pdf_into_png_image(path_to_resource("src/invoice.typ"));
+        let new_image = generate_pdf_into_png_image(
+            path_to_resource("src/invoice.typ"),
+            L18n::english(),
+            sample,
+        );
 
-        let path_to_expected_image = fixture("expected.png");
         let save_new_image_as_expected = |new_image: Vec<u8>| {
             if !running_in_ci() {
                 // save newly produced image as expected.
@@ -113,7 +139,8 @@ mod tests {
                     .inspect_err(|e| {
                         panic!(
                             "should be able to write image, got error: {:?}, when using path: {:?}",
-                            e, path_to_expected_image
+                            e,
+                            path_to_expected_image.as_ref()
                         )
                     })
                     .unwrap();
@@ -126,7 +153,7 @@ mod tests {
         let Ok(image_two) = image::open(&path_to_expected_image) else {
             warn!(
                 "Failed to locate the expected image at {:?}, saving new image as expected (if not CI).",
-                path_to_expected_image
+                path_to_expected_image.as_ref()
             );
             save_new_image_as_expected(new_image);
             return;
@@ -158,9 +185,13 @@ mod tests {
         }
     }
 
-    fn generate_pdf_into_png_image(invoice_ui_path: impl AsRef<Path>) -> Vec<u8> {
-        let data = prepare_invoice_input_data().unwrap();
-        let pdf = render(data, invoice_ui_path).unwrap();
+    fn generate_pdf_into_png_image(
+        layout_path: impl AsRef<Path>,
+        l18n: L18n,
+        sample: InvoiceInputData,
+    ) -> Vec<u8> {
+        let data = prepare_invoice_input_data(sample, YearAndMonth::sample()).unwrap();
+        let pdf = render(layout_path, l18n, data).unwrap();
         convert_pdf_to_pngs(pdf.as_ref(), 85.0).expect("Should be able to convert")
     }
 

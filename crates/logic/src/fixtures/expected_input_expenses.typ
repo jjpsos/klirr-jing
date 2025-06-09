@@ -1,4 +1,4 @@
-#let make_invoice() = {
+#let provide() = {
   (
   client: (
     company_name: "Holmes Ltd",
@@ -16,17 +16,17 @@
     vat_number: "GB987654321",
   ),
   information: (
-    date: "2025-05-31",
     due_date: "2025-06-30",
+    emphasize_color_hex: "#E6007A",
     footer_text: "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
-    identifier: "INV-9876",
+    invoice_date: "2025-05-31",
+    number: 334,
     purchase_order: "PO-12345",
-    terms: (
-      net: 30,
-    ),
+    terms: "Net 30",
   ),
   line_items: (
-    expenses: (
+    is_expenses: true,
+    items: (
       (
         currency: "EUR",
         name: "Breakfast",
@@ -52,7 +52,6 @@
         unit_price: 8.218,
       ),
     ),
-    service: none,
   ),
   payment_info: (
     bank_name: "SEB",
