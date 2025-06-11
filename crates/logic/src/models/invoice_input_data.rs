@@ -1,22 +1,84 @@
+use derive_more::IsVariant;
+
 use crate::prelude::*;
 
-pub type InvoiceInputData = InvoiceInputDataAbstract<ProtoInvoiceInfo, LineItemsWithoutCost>;
+pub type InputUnpriced = AbstractInput<LineItemsWithoutCost>;
+pub type InputTypstFormat = AbstractInput<LineItemsFlat>;
 
-pub type InvoiceInputDataToTypst = InvoiceInputDataAbstract<InvoiceInfoFull, LineItemsFlat>;
+/// The items being invoiced this month, either services or expenses.
+#[derive(Clone, Debug, Serialize, Deserialize, IsVariant)]
+pub enum InvoicedItems {
+    Service { days_off: u8 },
+    Expenses(Vec<ItemWithoutCost>),
+}
+impl MaybeIsExpenses for InvoicedItems {
+    fn is_expenses(&self) -> bool {
+        self.is_expenses()
+    }
+}
 
-pub type InvoiceInputDataPartial = InvoiceInputDataAbstract<InvoiceInfoFull, LineItemsWithoutCost>;
+use chrono::{Datelike, NaiveDate, Weekday};
 
-impl InvoiceInputData {
-    pub fn to_partial(self, target_month: &YearAndMonth) -> InvoiceInputDataPartial {
+fn working_days_in_month(
+    target_month: &YearAndMonth,
+    months_off_record: &MonthsOffRecord,
+) -> Result<u8> {
+    if months_off_record.contains(target_month) {
+        return Err(Error::TargetMonthMustNotBeInRecordOfMonthsOff {
+            target_month: *target_month,
+        });
+    }
+
+    let year = **target_month.year() as i32;
+    let month = **target_month.month() as u32;
+
+    // Start from the 1st of the month
+    let mut day = NaiveDate::from_ymd_opt(year, month, 1)
+        .expect("Should always be able to create a date from year, month (and day)");
+
+    // Get the last day of the month
+    let last_day = if month == 12 {
+        NaiveDate::from_ymd_opt(year + 1, 1, 1)
+            .unwrap()
+            .pred_opt()
+            .unwrap()
+    } else {
+        NaiveDate::from_ymd_opt(year, month + 1, 1)
+            .unwrap()
+            .pred_opt()
+            .unwrap()
+    };
+
+    let mut working_days = 0;
+    while day <= last_day {
+        match day.weekday() {
+            Weekday::Mon | Weekday::Tue | Weekday::Wed | Weekday::Thu | Weekday::Fri => {
+                working_days += 1;
+            }
+            _ => {}
+        }
+        day = day.succ_opt().unwrap();
+    }
+
+    Ok(working_days)
+}
+
+impl ProtoInput {
+    pub fn to_partial(
+        self,
+        target_month: &YearAndMonth,
+        items: &InvoicedItems,
+    ) -> Result<InputUnpriced> {
         let invoice_date = target_month.to_date_end_of_month();
         let due_date = invoice_date.advance(self.information().terms());
-        let is_expenses = self.line_items.is_expenses();
+        let is_expenses = items.is_expenses();
         let number = calculate_invoice_number(
             self.information().offset(),
             target_month,
             is_expenses,
             self.information.months_off_record(),
         );
+
         let full_info = InvoiceInfoFull::builder()
             .due_date(due_date)
             .invoice_date(invoice_date)
@@ -26,24 +88,44 @@ impl InvoiceInputData {
             .purchase_order(self.information().purchase_order().clone())
             .terms(self.information().terms().clone())
             .build();
-        InvoiceInputDataAbstract::<InvoiceInfoFull, LineItemsWithoutCost>::builder()
+
+        let input_unpriced = AbstractInput::<LineItemsWithoutCost>::builder()
             .client(self.client)
             .information(full_info)
-            .line_items(self.line_items)
+            .line_items(match items {
+                InvoicedItems::Service { days_off } => {
+                    let working_days =
+                        working_days_in_month(target_month, self.information.months_off_record())?;
+                    let worked_days = working_days - days_off;
+                    let service = ItemWithoutCost::builder()
+                        .name(self.services_price.name().clone())
+                        .transaction_date(invoice_date)
+                        .quantity(Quantity::from(worked_days as f64))
+                        .unit_price(*self.services_price.unit_price())
+                        .currency(*self.payment_info.currency())
+                        .build();
+                    LineItemsWithoutCost::Service(service)
+                }
+                InvoicedItems::Expenses(expenses) => {
+                    LineItemsWithoutCost::Expenses(expenses.clone())
+                }
+            })
             .payment_info(self.payment_info)
             .vendor(self.vendor)
-            .build()
+            .build();
+
+        Ok(input_unpriced)
     }
 }
 
-impl InvoiceInputDataPartial {
-    pub fn to_typst(self, exchange_rates_map: ExchangeRatesMap) -> Result<InvoiceInputDataToTypst> {
+impl InputUnpriced {
+    pub fn to_typst(self, exchange_rates_map: ExchangeRatesMap) -> Result<InputTypstFormat> {
         let exchange_rates = ExchangeRates::builder()
             .rates(exchange_rates_map)
             .target_currency(*self.payment_info().currency())
             .build();
         let line_items = LineItemsFlat::try_from((self.line_items, exchange_rates))?;
-        Ok(InvoiceInputDataToTypst {
+        Ok(InputTypstFormat {
             line_items,
             information: self.information,
             vendor: self.vendor,
@@ -56,11 +138,43 @@ impl InvoiceInputDataPartial {
 /// The input data for the invoice, which includes information about the invoice,
 /// the vendor, and the client and the products/services included in the invoice.
 #[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
-pub struct InvoiceInputDataAbstract<Info: Serialize, Items: Serialize + IsExpenses> {
+pub struct ProtoInput {
     /// Information about this specific invoice.
     #[builder(setter(into))]
     #[getset(get = "pub")]
-    information: Info,
+    information: ProtoInvoiceInfo,
+
+    /// The company that issued the invoice, the vendor/seller/supplier/issuer.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    vendor: CompanyInformation,
+
+    /// The company that pays the invoice, the customer/buyer.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    client: CompanyInformation,
+
+    /// Payment information for the vendor, used for international transfers.
+    /// This includes the IBAN, bank name, and BIC.
+    /// This is used to ensure that the client can pay the invoice correctly.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    payment_info: PaymentInformation,
+
+    /// Price of consulting service, if applicable.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    services_price: ConsultingService,
+}
+
+/// The input data for the invoice, which includes information about the invoice,
+/// the vendor, and the client and the products/services included in the invoice.
+#[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
+pub struct AbstractInput<Items: Serialize + MaybeIsExpenses> {
+    /// Information about this specific invoice.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    information: InvoiceInfoFull,
 
     /// The company that issued the invoice, the vendor/seller/supplier/issuer.
     #[builder(setter(into))]
@@ -272,28 +386,26 @@ impl PaymentInformation {
     }
 }
 
-impl InvoiceInputData {
-    pub fn sample_expenses() -> Self {
-        InvoiceInputData::builder()
+impl ProtoInput {
+    pub fn sample() -> Self {
+        ProtoInput::builder()
             .information(ProtoInvoiceInfo::sample())
             .client(CompanyInformation::sample_client())
             .vendor(CompanyInformation::sample_vendor())
-            .line_items(vec![
-                ItemWithoutCost::sample_expense_breakfast(),
-                ItemWithoutCost::sample_expense_coffee(),
-                ItemWithoutCost::sample_expense_sandwich(),
-            ])
             .payment_info(PaymentInformation::sample())
+            .services_price(ConsultingService::sample())
             .build()
     }
+}
 
-    pub fn sample_consulting_services() -> Self {
-        InvoiceInputData::builder()
-            .information(ProtoInvoiceInfo::sample())
-            .client(CompanyInformation::sample_client())
-            .vendor(CompanyInformation::sample_vendor())
-            .line_items(ItemWithoutCost::sample_consulting_service())
-            .payment_info(PaymentInformation::sample())
-            .build()
+#[cfg(test)]
+mod tests {
+    use insta::assert_ron_snapshot;
+
+    use super::*;
+
+    #[test]
+    fn test_serialization_sample() {
+        assert_ron_snapshot!(ProtoInput::sample())
     }
 }

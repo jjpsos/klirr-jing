@@ -25,6 +25,9 @@ impl MonthsOffRecord {
     pub fn new(periods: impl IntoIterator<Item = YearAndMonth>) -> Self {
         Self(IndexSet::from_iter(periods))
     }
+    pub fn contains(&self, year_and_month: &YearAndMonth) -> bool {
+        self.0.contains(year_and_month)
+    }
 }
 
 fn calculate_months_between(start: &YearAndMonth, end: &YearAndMonth) -> u16 {

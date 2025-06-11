@@ -4,12 +4,12 @@ use derive_more::{IsVariant, TryUnwrap};
 
 use crate::prelude::*;
 
-pub trait IsExpenses {
+pub trait MaybeIsExpenses {
     /// Returns true if this invoice is for expenses only.
     fn is_expenses(&self) -> bool;
 }
 
-impl IsExpenses for LineItemsWithoutCost {
+impl MaybeIsExpenses for LineItemsWithoutCost {
     fn is_expenses(&self) -> bool {
         self.is_expenses()
     }
@@ -96,7 +96,7 @@ pub struct LineItemsFlat {
     items: Vec<ItemWithCost>,
 }
 
-impl IsExpenses for LineItemsFlat {
+impl MaybeIsExpenses for LineItemsFlat {
     fn is_expenses(&self) -> bool {
         self.is_expenses
     }

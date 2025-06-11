@@ -6,6 +6,10 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// during PDF generation and manipulation.
 #[derive(Clone, Debug, ThisError)]
 pub enum Error {
+    /// The target month is in the record of months off, but it must not be.
+    #[error("Target month {target_month} is in the record of months off, but it must not be.")]
+    TargetMonthMustNotBeInRecordOfMonthsOff { target_month: YearAndMonth },
+
     /// Failed to parse PaymentTerms NetDays from a string, e.g. when the format is incorrect.
     #[error("Failed to PaymentTerms NetDays from string: {invalid_string}")]
     FailedToParsePaymentTermsNetDays { invalid_string: String },

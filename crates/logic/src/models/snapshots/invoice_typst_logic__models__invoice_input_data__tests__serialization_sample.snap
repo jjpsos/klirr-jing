@@ -3,21 +3,19 @@ source: crates/logic/src/models/invoice_input_data.rs
 expression: "ProtoInput::sample()"
 ---
 ProtoInput(
-  information: InvoiceInformation(
-    number: 237,
+  information: ProtoInvoiceInfo(
     purchase_order: "PO-12345",
-    date: Date(
-      year: Year(2025),
-      month: Month(5),
-      day: Day(31),
+    offset: TimestampedInvoiceNumber(
+      offset: 237,
+      month: "2017-03",
     ),
-    terms: Net(30),
-    currency: "EUR",
-  ),
-  payment_info: (
-    bank_name: "SEB",
-    bic: "ESSESESS",
-    iban: "SE3550000000054910000003",
+    months_off_record: MonthsOffRecord([
+      "2020-09",
+      "2021-03",
+    ]),
+    terms: "Net 30",
+    footer_text: "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
+    emphasize_color_hex: "#E6007A",
   ),
   vendor: CompanyInformation(
     contact_person: Some("Ture Sventon"),
@@ -49,17 +47,14 @@ ProtoInput(
     ),
     vat_number: "GB987654321",
   ),
-  line_items: Expenses([
-    Item(
-      transaction_date: Date(
-        year: Year(2025),
-        month: Month(5),
-        day: Day(31),
-      ),
-      name: "Consulting services",
-      unit_price: 50.0,
-      quantity: 10.0,
-      currency: "EUR",
-    ),
-  ]),
+  payment_info: PaymentInformation(
+    iban: "SE21 9000 0123 9876 5432 1009",
+    bank_name: "SEB",
+    bic: "ESSESESS",
+    currency: "EUR",
+  ),
+  services_price: ConsultingService(
+    name: "App development",
+    unit_price: UnitPrice(350.0),
+  ),
 )

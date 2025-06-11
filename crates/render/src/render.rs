@@ -8,11 +8,7 @@ use typst::layout::PagedDocument;
 use typst_pdf::PdfOptions;
 use typst_pdf::pdf;
 
-pub fn render(
-    layout_path: impl AsRef<Path>,
-    l18n: L18n,
-    data: InvoiceInputDataToTypst,
-) -> Result<Pdf> {
+pub fn render(layout_path: impl AsRef<Path>, l18n: L18n, data: InputTypstFormat) -> Result<Pdf> {
     let l18n_typst_str = to_typst_let(&l18n.content());
     let data_typst_str = to_typst_let(&data);
     let data_count = data_typst_str.len();
@@ -105,7 +101,12 @@ mod tests {
     #[test]
     fn test_sample_expenses() {
         compare_image_against_expected(
-            InvoiceInputData::sample_expenses(),
+            ProtoInput::sample(),
+            InvoicedItems::Expenses(vec![
+                ItemWithoutCost::sample_expense_coffee(),
+                ItemWithoutCost::sample_expense_sandwich(),
+                ItemWithoutCost::sample_expense_breakfast(),
+            ]),
             fixture("expected_expenses.png"),
         );
     }
@@ -113,13 +114,15 @@ mod tests {
     #[test]
     fn test_sample_services() {
         compare_image_against_expected(
-            InvoiceInputData::sample_consulting_services(),
+            ProtoInput::sample(),
+            InvoicedItems::Service { days_off: 0 },
             fixture("expected_services.png"),
         );
     }
 
     fn compare_image_against_expected(
-        sample: InvoiceInputData,
+        sample: ProtoInput,
+        invoiced_items: InvoicedItems,
         path_to_expected_image: impl AsRef<Path>,
     ) {
         assert!(
@@ -130,6 +133,7 @@ mod tests {
             path_to_resource("src/invoice.typ"),
             L18n::english(),
             sample,
+            invoiced_items,
         );
 
         let save_new_image_as_expected = |new_image: Vec<u8>| {
@@ -188,9 +192,11 @@ mod tests {
     fn generate_pdf_into_png_image(
         layout_path: impl AsRef<Path>,
         l18n: L18n,
-        sample: InvoiceInputData,
+        sample: ProtoInput,
+        invoiced_items: InvoicedItems,
     ) -> Vec<u8> {
-        let data = prepare_invoice_input_data(sample, YearAndMonth::sample()).unwrap();
+        let data =
+            prepare_invoice_input_data(sample, YearAndMonth::sample(), invoiced_items).unwrap();
         let pdf = render(layout_path, l18n, data).unwrap();
         convert_pdf_to_pngs(pdf.as_ref(), 85.0).expect("Should be able to convert")
     }

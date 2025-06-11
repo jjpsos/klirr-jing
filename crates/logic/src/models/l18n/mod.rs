@@ -260,3 +260,15 @@ impl L18n {
         Ok(content.clone())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use insta::assert_ron_snapshot;
+
+    use super::*;
+
+    #[test]
+    fn test_l18n_english() {
+        assert_ron_snapshot!(&L18n::english());
+    }
+}

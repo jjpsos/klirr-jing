@@ -1,6 +1,26 @@
 use crate::prelude::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Getters, TypedBuilder)]
+pub struct ConsultingService {
+    /// Description of the consulting service, e.g. `"App development"`
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    name: String,
+    /// The cost per item
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    unit_price: UnitPrice,
+}
+impl ConsultingService {
+    pub fn sample() -> Self {
+        Self::builder()
+            .name("App development".to_string())
+            .unit_price(UnitPrice::from(350.0))
+            .build()
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Getters, TypedBuilder)]
 pub struct ItemWithoutCost {
     /// The date of the expense, e.g. `2025-05-31`
     #[builder(setter(into))]
@@ -37,13 +57,13 @@ pub struct ItemWithCost {
     total_cost: Cost,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, From, Deref)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, From, Deref)]
 pub struct Quantity(f64);
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, From, Deref)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, From, Deref)]
 pub struct Cost(f64);
 
-#[derive(Clone, Debug, Serialize, Deserialize, From, Deref)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, From, Deref)]
 pub struct UnitPrice(f64);
 
 impl ItemWithoutCost {
