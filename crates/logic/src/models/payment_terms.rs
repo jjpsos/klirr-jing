@@ -38,7 +38,9 @@ impl FromStr for NetDays {
 }
 impl NetDays {
     pub fn net30() -> Self {
-        Self::builder().due_in(Day::from(30)).build()
+        Self::builder()
+            .due_in(Day::try_from(30).expect("LEQ 31 days"))
+            .build()
     }
 }
 

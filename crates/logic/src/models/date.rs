@@ -64,19 +64,20 @@ pub struct YearAndMonth {
 impl YearAndMonth {
     pub fn last_day_of_month(&self) -> Day {
         match **self.month() {
-            1 | 3 | 5 | 7 | 8 | 10 | 12 => Day::from(31),
-            4 | 6 | 9 | 11 => Day::from(30),
+            1 | 3 | 5 | 7 | 8 | 10 | 12 => Day::try_from(31).expect("LEQ 31 days"),
+            4 | 6 | 9 | 11 => Day::try_from(30).expect("LEQ 31 days"),
             2 => {
                 let year = **self.year();
                 if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
-                    Day::from(29)
+                    Day::try_from(29).expect("LEQ 31 days")
                 } else {
-                    Day::from(28)
+                    Day::try_from(28).expect("LEQ 31 days")
                 }
             }
             _ => unreachable!("Invalid month value"),
         }
     }
+
     pub fn to_date_end_of_month(&self) -> Date {
         Date::builder()
             .year(self.year)
@@ -84,7 +85,38 @@ impl YearAndMonth {
             .day(self.last_day_of_month())
             .build()
     }
+
+    pub fn current() -> Self {
+        use chrono::Datelike;
+        let today = chrono::Local::now().date_naive();
+        Self::builder()
+            .year(Year::from(today.year()))
+            .month(Month::try_from(today.month() as i32).expect("Chrono should return valid month"))
+            .build()
+    }
+
+    pub fn one_month_earlier(&self) -> Self {
+        let mut year = *self.year;
+        let mut month = *self.month;
+
+        if month == 1 {
+            year -= 1;
+            month = 12
+        } else {
+            month -= 1
+        }
+
+        Self::builder()
+            .year(Year::from(year))
+            .month(Month::try_from(month).expect("Should return valid month"))
+            .build()
+    }
+
+    pub fn last() -> Self {
+        Self::current().one_month_earlier()
+    }
 }
+
 impl PartialOrd for YearAndMonth {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         if self.year > other.year {
@@ -119,13 +151,14 @@ impl std::str::FromStr for YearAndMonth {
                     underlying: "Invalid year".to_owned(),
                 })?,
         );
-        let month = Month::from(
-            parts[1]
-                .parse::<i32>()
-                .map_err(|_| Error::FailedToParseDate {
-                    underlying: "Invalid month".to_owned(),
-                })?,
-        );
+        let month =
+            Month::try_from(
+                parts[1]
+                    .parse::<i32>()
+                    .map_err(|_| Error::FailedToParseDate {
+                        underlying: "Invalid month".to_owned(),
+                    })?,
+            )?;
 
         Ok(Self::builder().year(year).month(month).build())
     }
@@ -149,20 +182,22 @@ impl std::str::FromStr for Date {
                     underlying: "Invalid year".to_owned(),
                 })?,
         );
-        let month = Month::from(
-            parts[1]
-                .parse::<i32>()
-                .map_err(|_| Error::FailedToParseDate {
-                    underlying: "Invalid month".to_owned(),
-                })?,
-        );
-        let day = Day::from(
-            parts[2]
-                .parse::<i32>()
-                .map_err(|_| Error::FailedToParseDate {
-                    underlying: "Invalid day".to_owned(),
-                })?,
-        );
+        let month =
+            Month::try_from(
+                parts[1]
+                    .parse::<i32>()
+                    .map_err(|_| Error::FailedToParseDate {
+                        underlying: "Invalid month".to_owned(),
+                    })?,
+            )?;
+        let day =
+            Day::try_from(
+                parts[2]
+                    .parse::<i32>()
+                    .map_err(|_| Error::FailedToParseDate {
+                        underlying: "Invalid day".to_owned(),
+                    })?,
+            )?;
 
         Ok(Self::builder().year(year).month(month).day(day).build())
     }
@@ -171,6 +206,21 @@ impl std::str::FromStr for Date {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_date_from_str() {
+        let sut = Date::from_str("2025-05-23").unwrap();
+        assert_eq!(sut.year(), &Year::from(2025));
+        assert_eq!(sut.month(), &Month::try_from(5).unwrap());
+        assert_eq!(sut.day(), &Day::try_from(23).unwrap());
+    }
+
+    #[test]
+    fn test_year_month_from_str() {
+        let sut = YearAndMonth::from_str("2025-05").unwrap();
+        assert_eq!(sut.year(), &Year::from(2025));
+        assert_eq!(sut.month(), &Month::try_from(5).unwrap());
+    }
 
     #[test]
     fn test_compare_year_and_month() {

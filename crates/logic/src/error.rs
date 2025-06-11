@@ -6,6 +6,36 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// during PDF generation and manipulation.
 #[derive(Clone, Debug, ThisError)]
 pub enum Error {
+    /// Target month must have expenses, but it does not.
+    #[error(
+        "Target month {target_month} must have expenses, but it does not. Fill 
+    in the `input/data/expenses.json` file with expenses for this month."
+    )]
+    TargetMonthMustHaveExpenses { target_month: YearAndMonth },
+
+    /// Failed to load file
+    #[error("Failed to load file: {path}")]
+    FileNotFound { path: String },
+
+    /// Failed to deserialize a type
+    #[error("Failed to deserialize {type_name}, because: {error}")]
+    Deserialize { type_name: String, error: String },
+
+    /// Invalid day of the month, e.g. when the day is not between 1 and 31.
+    #[error("Invalid day: {day}, reason: {reason}")]
+    InvalidDay { day: i32, reason: String },
+
+    /// Invalid month, e.g. when the month is not between 1 and 12.
+    #[error("Invalid month: {month}, reason: {reason}")]
+    InvalidMonth { month: i32, reason: String },
+
+    /// Failed to parse expense item from a string, e.g. when the format is incorrect.
+    #[error("Failed to parse expense item from string: {invalid_string}, reason: {reason}")]
+    InvalidExpenseItem {
+        invalid_string: String,
+        reason: String,
+    },
+
     /// The target month is in the record of months off, but it must not be.
     #[error("Target month {target_month} is in the record of months off, but it must not be.")]
     TargetMonthMustNotBeInRecordOfMonthsOff { target_month: YearAndMonth },

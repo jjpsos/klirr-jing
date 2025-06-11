@@ -78,7 +78,10 @@ mod tests {
         ($sample:expr, $invoiced_items:expr, $expected:expr) => {{
             let input = $sample
                 .to_partial(
-                    &YearAndMonth::builder().year(2025).month(5).build(),
+                    &YearAndMonth::builder()
+                        .year(2025)
+                        .month(Month::try_from(5).expect("LEQ 12"))
+                        .build(),
                     &$invoiced_items,
                 )
                 .unwrap()
@@ -102,12 +105,8 @@ mod tests {
     #[test]
     fn sample_expenses_to_typst() {
         test_data_to_typst!(
-            ProtoInput::sample(),
-            InvoicedItems::Expenses(vec![
-                ItemWithoutCost::sample_expense_breakfast(),
-                ItemWithoutCost::sample_expense_coffee(),
-                ItemWithoutCost::sample_expense_sandwich()
-            ]),
+            DataFromDisk::sample(),
+            InvoicedItems::Expenses,
             include_str!("./fixtures/expected_input_expenses.typ")
         );
     }
@@ -115,8 +114,8 @@ mod tests {
     #[test]
     fn sample_services_to_typst() {
         test_data_to_typst!(
-            ProtoInput::sample(),
-            InvoicedItems::Service { days_off: 0 },
+            DataFromDisk::sample(),
+            InvoicedItems::Service { days_off: None },
             include_str!("./fixtures/expected_input_services.typ")
         );
     }

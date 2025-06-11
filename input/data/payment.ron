@@ -1,4 +1,4 @@
-PaymentInfo(
+PaymentInformation(
 	bank_name: "SEB",
 	bic: "ESSESESS",
 	currency: "EUR",

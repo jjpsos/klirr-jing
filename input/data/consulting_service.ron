@@ -1,4 +1,4 @@
 ConsultingService(
     name: "Agreed Consulting Service",
-	unit_price: 350.0
+	unit_price: UnitPrice(350.0)
 )

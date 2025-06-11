@@ -4,7 +4,7 @@ members = ["crates/cli", "crates/render", "crates/logic"]
 
 [workspace.dependencies]
 # Internal dependencies
-invoice-typst-cli = { path = "crates/cli" }
+invoice = { path = "crates/cli" }
 invoice-typst-render = { path = "crates/render" }
 invoice-typst-logic = { path = "crates/logic" }
 
@@ -12,6 +12,7 @@ invoice-typst-logic = { path = "crates/logic" }
 chrono = "0.4.41"
 thiserror = "2.0.12"
 derive_more = { version = "2.0.1", features = ["full"] }
+indexmap = { version = "2.9.0", features = ["serde"] }
 log = "0.4.27"
 ron = "0.10.1"
 insta = { version = "1.43.1", features = ["ron"] }

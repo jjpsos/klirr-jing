@@ -1,6 +1,6 @@
 ---
 source: crates/logic/src/models/invoice_input_data.rs
-expression: "ProtoInput::sample_expenses()"
+expression: "DataFromDisk::sample_expenses()"
 ---
 InvoiceInputDataAbstract(
   information: ProtoInvoiceInfo(
@@ -48,21 +48,21 @@ InvoiceInputDataAbstract(
     vat_number: "GB987654321",
   ),
   line_items: Expenses([
-    ItemWithoutCost(
+    Item(
       transaction_date: "2025-05-20",
       name: "Breakfast",
       unit_price: UnitPrice(145.0),
       quantity: Quantity(1.0),
       currency: "SEK",
     ),
-    ItemWithoutCost(
+    Item(
       transaction_date: "2025-05-31",
       name: "Coffee",
       unit_price: UnitPrice(4.0),
       quantity: Quantity(2.0),
       currency: "GBP",
     ),
-    ItemWithoutCost(
+    Item(
       transaction_date: "2025-05-31",
       name: "Sandwich",
       unit_price: UnitPrice(7.0),

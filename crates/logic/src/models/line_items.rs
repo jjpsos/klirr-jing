@@ -20,10 +20,10 @@ impl MaybeIsExpenses for LineItemsWithoutCost {
 #[from(Vec<Item>, Item)]
 pub enum LineItemsWithoutCost {
     /// Service sold by the vendor to the client, e.g. `"App development"`
-    Service(ItemWithoutCost),
+    Service(Item),
     /// Expense incurred by the vendor, travel expenses for a conference/summit/
     /// retreat
-    Expenses(Vec<ItemWithoutCost>),
+    Expenses(Vec<Item>),
 }
 
 #[derive(Clone, Debug, Serialize, TypedBuilder, Getters)]
@@ -93,7 +93,7 @@ pub struct LineItemsFlat {
 
     /// Either a single item (Serivec) or one or more expenses
     #[getset(get = "pub")]
-    items: Vec<ItemWithCost>,
+    items: Vec<ItemConvertedIntoTargetCurrency>,
 }
 
 impl MaybeIsExpenses for LineItemsFlat {

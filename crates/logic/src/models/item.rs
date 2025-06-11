@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::prelude::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Getters, TypedBuilder)]
@@ -20,12 +22,16 @@ impl ConsultingService {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Getters, TypedBuilder)]
-pub struct ItemWithoutCost {
-    /// The date of the expense, e.g. `2025-05-31`
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    transaction_date: Date,
+#[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize, Getters, TypedBuilder)]
+#[display(
+    "{}: {}{} #{} @{}",
+    name,
+    unit_price,
+    currency,
+    quantity,
+    transaction_date
+)]
+pub struct Item {
     /// The short name of the expense, e.g. `"Coffee"`
     #[builder(setter(into))]
     #[getset(get = "pub")]
@@ -34,22 +40,27 @@ pub struct ItemWithoutCost {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     unit_price: UnitPrice,
-    /// The quantity of the expense, e.g. `2.0` for two items
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    quantity: Quantity,
     /// The currency of the expense, e.g. `"EUR"`
     #[builder(setter(into))]
     #[getset(get = "pub")]
     currency: Currency,
+    /// The quantity of the expense, e.g. `2.0` for two items
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    quantity: Quantity,
+    /// The date of the expense, e.g. `2025-05-31`
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    transaction_date: Date,
 }
 
 /// An item with a total cost, calculated as `unit_price * quantity`.
 #[derive(Clone, Debug, Serialize, Deserialize, Deref, From, Getters, TypedBuilder)]
-pub struct ItemWithCost {
+pub struct ItemConvertedIntoTargetCurrency {
+    /// An item in the currency it was paid in.
     #[deref]
     #[serde(flatten)]
-    without_cost: ItemWithoutCost,
+    in_source_currency: Item,
 
     /// The total cost of the item, calculated as `unit_price * quantity`
     #[builder(setter(into))]
@@ -57,28 +68,28 @@ pub struct ItemWithCost {
     total_cost: Cost,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, From, Deref)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, Serialize, Deserialize, From, Deref)]
 pub struct Quantity(f64);
 
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, From, Deref)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, Default, Serialize, Deserialize, From, Deref)]
 pub struct Cost(f64);
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, From, Deref)]
+#[derive(Clone, Copy, Display, PartialEq, Debug, Serialize, Deserialize, From, Deref)]
 pub struct UnitPrice(f64);
 
-impl ItemWithoutCost {
+impl Item {
     pub fn converting_currency_and_calculating_total_cost(
         self,
         exchange_rates: &ExchangeRates,
-    ) -> Result<ItemWithCost> {
+    ) -> Result<ItemConvertedIntoTargetCurrency> {
         let converted_rates = self.with_exchange_rates(exchange_rates)?;
         Ok(converted_rates.with_total_cost())
     }
 
-    fn with_total_cost(self) -> ItemWithCost {
+    fn with_total_cost(self) -> ItemConvertedIntoTargetCurrency {
         let cost = Cost::from(**self.quantity() * **self.unit_price());
-        ItemWithCost::builder()
-            .without_cost(self.clone())
+        ItemConvertedIntoTargetCurrency::builder()
+            .in_source_currency(self.clone())
             .total_cost(cost)
             .build()
     }
@@ -92,5 +103,76 @@ impl ItemWithoutCost {
             .quantity(self.quantity)
             .currency(*exchange_rates.target_currency())
             .build())
+    }
+}
+
+impl FromStr for Item {
+    type Err = crate::prelude::Error;
+
+    /// Parses a string in the format: "name, unit_price, currency, quantity, transaction_date", or
+    /// without spaces after commas, even mixed, e.g. "Coffee, 2.5,EUR, 3.0,2025-05-31".
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split(',').map(str::trim).collect();
+        if parts.len() != 5 {
+            return Err(Error::InvalidExpenseItem {
+                invalid_string: s.to_string(),
+                reason: "Expected 5 comma-separated values".to_string(),
+            });
+        }
+
+        let name = parts[0].to_string();
+        let unit_price: UnitPrice = parts[1]
+            .parse::<f64>()
+            .map_err(|e| Error::InvalidExpenseItem {
+                invalid_string: s.to_string(),
+                reason: format!("Failed to parse unit_price: {e}"),
+            })?
+            .into();
+
+        let currency = Currency::from_str(parts[2]).map_err(|e| Error::InvalidExpenseItem {
+            invalid_string: s.to_string(),
+            reason: format!("Failed to parse currency: {e}"),
+        })?;
+
+        let quantity: Quantity = parts[3]
+            .parse::<f64>()
+            .map_err(|e| Error::InvalidExpenseItem {
+                invalid_string: s.to_string(),
+                reason: format!("Failed to parse quantity: {e}"),
+            })?
+            .into();
+
+        let transaction_date = Date::from_str(parts[4]).map_err(|e| Error::InvalidExpenseItem {
+            invalid_string: s.to_string(),
+            reason: format!("Failed to parse transaction_date: {e}"),
+        })?;
+
+        Ok(Item::builder()
+            .name(name)
+            .unit_price(unit_price)
+            .currency(currency)
+            .quantity(quantity)
+            .transaction_date(transaction_date)
+            .build())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_from_str() {
+        // N.B. sometimes space after comma, sometimes not.
+        let sut = Item::from_str("Coffee,2.5, EUR,3.0, 2025-05-31").expect("Failed to parse Item");
+        assert_eq!(sut.name(), "Coffee");
+        assert_eq!(**sut.unit_price(), 2.5);
+        assert_eq!(sut.currency(), &Currency::EUR);
+        assert_eq!(**sut.quantity(), 3.0);
+        assert_eq!(
+            sut.transaction_date(),
+            &Date::from_str("2025-05-31").unwrap()
+        );
     }
 }

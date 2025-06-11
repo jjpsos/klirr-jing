@@ -29,7 +29,6 @@ const RUST_LOG_ENV: &str = "RUST_LOG";
 pub(crate) fn init_logging_with_level(log_level: log::LevelFilter) {
     println!("Setting up logging with level: {log_level}");
     fern::Dispatch::new()
-        .filter(|metadata| metadata.target().starts_with("invoice_typst"))
         .format(|out, message, record| {
             let time = Local::now().format("%H:%M:%S");
             let level = match record.level() {

@@ -148,8 +148,13 @@ impl From<NaiveDateTime> for Date {
     fn from(value: NaiveDateTime) -> Self {
         Self::builder()
             .year(value.year())
-            .month(value.month())
-            .day(value.day())
+            .month(
+                Month::try_from(value.month())
+                    .expect("NativeDateTime should always return valid month."),
+            )
+            .day(
+                Day::try_from(value.day()).expect("NativeDateTime should always return valid day."),
+            )
             .build()
     }
 }

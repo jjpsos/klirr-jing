@@ -1,6 +1,6 @@
 CompanyInformation(
 	company_name: "Bra Detektiv AB",
-	contact_person: "Ture Sventon",
+	contact_person: Some("Ture Sventon"),
 	organisation_number: "556123-4567",
 	postal_address: (
 		city: "Stockholm",

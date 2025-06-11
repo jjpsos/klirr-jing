@@ -6,15 +6,29 @@ use crate::prelude::*;
 )]
 pub struct Month(u8);
 
-impl From<i32> for Month {
-    fn from(month: i32) -> Self {
-        assert!((1..=12).contains(&month), "Month must be between 1 and 12");
-        Self(month as u8)
+impl TryFrom<i32> for Month {
+    type Error = crate::prelude::Error;
+    fn try_from(month: i32) -> Result<Self> {
+        if !(1..=31).contains(&month) {
+            return Err(Error::InvalidMonth {
+                month,
+                reason: "Month must be between 1 and 12".to_string(),
+            });
+        }
+        Ok(Self(month as u8))
     }
 }
 
-impl From<u32> for Month {
-    fn from(month: u32) -> Self {
-        Self::from(month as i32)
+impl TryFrom<u8> for Month {
+    type Error = crate::prelude::Error;
+    fn try_from(month: u8) -> Result<Self> {
+        Self::try_from(month as i32)
+    }
+}
+
+impl TryFrom<u32> for Month {
+    type Error = crate::prelude::Error;
+    fn try_from(month: u32) -> Result<Self> {
+        Self::try_from(month as i32)
     }
 }

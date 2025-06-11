@@ -1,13 +1,11 @@
 use std::fmt;
+use std::str::FromStr;
 
-use serde::{
-    Deserialize, Deserializer, Serializer,
-    de::{self, Visitor},
-};
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use crate::prelude::*;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, DeserializeFromStr, SerializeDisplay)]
 pub enum Currency {
     /// 🇺🇸 United States Dollar (USD), used in the United States
     USD,
@@ -77,60 +75,31 @@ impl fmt::Display for Currency {
     }
 }
 
-// Serde serialization using ISO code
-impl Serialize for Currency {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
+impl FromStr for Currency {
+    type Err = String;
 
-// Serde deserialization using ISO code
-impl<'de> Deserialize<'de> for Currency {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct CurrencyVisitor;
-
-        impl Visitor<'_> for CurrencyVisitor {
-            type Value = Currency;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a valid ISO 4217 currency code string")
-            }
-
-            fn visit_str<E>(self, value: &str) -> Result<Currency, E>
-            where
-                E: de::Error,
-            {
-                match value {
-                    "USD" => Ok(Currency::USD),
-                    "EUR" => Ok(Currency::EUR),
-                    "GBP" => Ok(Currency::GBP),
-                    "JPY" => Ok(Currency::JPY),
-                    "CAD" => Ok(Currency::CAD),
-                    "AUD" => Ok(Currency::AUD),
-                    "CHF" => Ok(Currency::CHF),
-                    "SEK" => Ok(Currency::SEK),
-                    "NOK" => Ok(Currency::NOK),
-                    "DKK" => Ok(Currency::DKK),
-                    "CNY" => Ok(Currency::CNY),
-                    "INR" => Ok(Currency::INR),
-                    "BRL" => Ok(Currency::BRL),
-                    "RUB" => Ok(Currency::RUB),
-                    "ZAR" => Ok(Currency::ZAR),
-                    "MXN" => Ok(Currency::MXN),
-                    "NZD" => Ok(Currency::NZD),
-                    "SGD" => Ok(Currency::SGD),
-                    "HKD" => Ok(Currency::HKD),
-                    _ => Err(E::custom(format!("unknown currency code: {}", value))),
-                }
-            }
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "USD" => Ok(Currency::USD),
+            "EUR" => Ok(Currency::EUR),
+            "GBP" => Ok(Currency::GBP),
+            "JPY" => Ok(Currency::JPY),
+            "CAD" => Ok(Currency::CAD),
+            "AUD" => Ok(Currency::AUD),
+            "CHF" => Ok(Currency::CHF),
+            "SEK" => Ok(Currency::SEK),
+            "NOK" => Ok(Currency::NOK),
+            "DKK" => Ok(Currency::DKK),
+            "CNY" => Ok(Currency::CNY),
+            "INR" => Ok(Currency::INR),
+            "BRL" => Ok(Currency::BRL),
+            "RUB" => Ok(Currency::RUB),
+            "ZAR" => Ok(Currency::ZAR),
+            "MXN" => Ok(Currency::MXN),
+            "NZD" => Ok(Currency::NZD),
+            "SGD" => Ok(Currency::SGD),
+            "HKD" => Ok(Currency::HKD),
+            _ => Err(format!("unknown currency code: {}", s)),
         }
-
-        deserializer.deserialize_str(CurrencyVisitor)
     }
 }

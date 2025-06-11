@@ -1,15 +1,18 @@
 use derive_more::IsVariant;
+use indexmap::IndexMap;
 
 use crate::prelude::*;
 
 pub type InputUnpriced = AbstractInput<LineItemsWithoutCost>;
-pub type InputTypstFormat = AbstractInput<LineItemsFlat>;
+pub type DataTypstCompat = AbstractInput<LineItemsFlat>;
 
 /// The items being invoiced this month, either services or expenses.
-#[derive(Clone, Debug, Serialize, Deserialize, IsVariant)]
+#[derive(Clone, Debug, Display, Serialize, Deserialize, IsVariant)]
 pub enum InvoicedItems {
-    Service { days_off: u8 },
-    Expenses(Vec<ItemWithoutCost>),
+    #[display("Service {{ days_off: {} }} ", days_off.map(|d| *d).unwrap_or(0))]
+    Service { days_off: Option<Day> },
+    #[display("Expenses")]
+    Expenses,
 }
 impl MaybeIsExpenses for InvoicedItems {
     fn is_expenses(&self) -> bool {
@@ -63,7 +66,20 @@ fn working_days_in_month(
     Ok(working_days)
 }
 
-impl ProtoInput {
+fn get_expenses_for_month(
+    target_month: &YearAndMonth,
+    expenses_for_months: &IndexMap<YearAndMonth, Vec<Item>>,
+) -> Result<Vec<Item>> {
+    if let Some(items) = expenses_for_months.get(target_month) {
+        Ok(items.clone())
+    } else {
+        Err(Error::TargetMonthMustHaveExpenses {
+            target_month: *target_month,
+        })
+    }
+}
+
+impl DataFromDisk {
     pub fn to_partial(
         self,
         target_month: &YearAndMonth,
@@ -96,8 +112,8 @@ impl ProtoInput {
                 InvoicedItems::Service { days_off } => {
                     let working_days =
                         working_days_in_month(target_month, self.information.months_off_record())?;
-                    let worked_days = working_days - days_off;
-                    let service = ItemWithoutCost::builder()
+                    let worked_days = working_days - days_off.map(|d| *d).unwrap_or(0);
+                    let service = Item::builder()
                         .name(self.services_price.name().clone())
                         .transaction_date(invoice_date)
                         .quantity(Quantity::from(worked_days as f64))
@@ -106,7 +122,11 @@ impl ProtoInput {
                         .build();
                     LineItemsWithoutCost::Service(service)
                 }
-                InvoicedItems::Expenses(expenses) => {
+                InvoicedItems::Expenses => {
+                    let expenses = get_expenses_for_month(
+                        target_month,
+                        &self.expensed_months.expenses_for_months,
+                    )?;
                     LineItemsWithoutCost::Expenses(expenses.clone())
                 }
             })
@@ -119,13 +139,13 @@ impl ProtoInput {
 }
 
 impl InputUnpriced {
-    pub fn to_typst(self, exchange_rates_map: ExchangeRatesMap) -> Result<InputTypstFormat> {
+    pub fn to_typst(self, exchange_rates_map: ExchangeRatesMap) -> Result<DataTypstCompat> {
         let exchange_rates = ExchangeRates::builder()
             .rates(exchange_rates_map)
             .target_currency(*self.payment_info().currency())
             .build();
         let line_items = LineItemsFlat::try_from((self.line_items, exchange_rates))?;
-        Ok(InputTypstFormat {
+        Ok(DataTypstCompat {
             line_items,
             information: self.information,
             vendor: self.vendor,
@@ -138,7 +158,7 @@ impl InputUnpriced {
 /// The input data for the invoice, which includes information about the invoice,
 /// the vendor, and the client and the products/services included in the invoice.
 #[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
-pub struct ProtoInput {
+pub struct DataFromDisk {
     /// Information about this specific invoice.
     #[builder(setter(into))]
     #[getset(get = "pub")]
@@ -165,6 +185,29 @@ pub struct ProtoInput {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     services_price: ConsultingService,
+
+    /// Price of consulting service, if applicable.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    expensed_months: ExpensedMonths,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExpensedMonths {
+    explanation: String,
+    expenses_for_months: IndexMap<YearAndMonth, Vec<Item>>,
+}
+impl ExpensedMonths {
+    pub fn new(expenses_for_months: IndexMap<YearAndMonth, Vec<Item>>) -> Self {
+        Self {
+            explanation: "Expenses for months".to_string(),
+            expenses_for_months,
+        }
+    }
+
+    pub fn contains(&self, month: &YearAndMonth) -> bool {
+        self.expenses_for_months.contains_key(month)
+    }
 }
 
 /// The input data for the invoice, which includes information about the invoice,
@@ -227,7 +270,11 @@ pub struct PaymentInformation {
 
 impl Date {
     pub fn sample() -> Self {
-        Self::builder().year(2025).month(5).day(31).build()
+        Self::builder()
+            .year(2025)
+            .month(Month::try_from(5).expect("LEQ 12 months"))
+            .day(Day::try_from(31).expect("LEQ 31 days"))
+            .build()
     }
 }
 impl PaymentTerms {
@@ -252,22 +299,36 @@ impl HexColor {
 }
 impl YearAndMonth {
     pub fn sample() -> Self {
-        Self::builder().year(2025).month(5).build()
+        Self::builder()
+            .year(2025)
+            .month(Month::try_from(5).expect("LEQ 12"))
+            .build()
     }
 }
 impl TimestampedInvoiceNumber {
     pub fn sample() -> Self {
         Self::builder()
             .offset(237u16)
-            .month(YearAndMonth::builder().year(2017).month(3).build())
+            .month(
+                YearAndMonth::builder()
+                    .year(2017)
+                    .month(Month::try_from(3).expect("LEQ 12"))
+                    .build(),
+            )
             .build()
     }
 }
 impl MonthsOffRecord {
     pub fn sample() -> Self {
         Self::new([
-            YearAndMonth::builder().year(2020).month(9).build(),
-            YearAndMonth::builder().year(2021).month(3).build(),
+            YearAndMonth::builder()
+                .year(2020)
+                .month(Month::try_from(9).expect("LEQ 12"))
+                .build(),
+            YearAndMonth::builder()
+                .year(2021)
+                .month(Month::try_from(3).expect("LEQ 12"))
+                .build(),
         ])
     }
 }
@@ -333,11 +394,17 @@ impl CompanyInformation {
     }
 }
 
-impl ItemWithoutCost {
+impl Item {
     pub fn sample_expense_breakfast() -> Self {
         Self::builder()
             .name("Breakfast")
-            .transaction_date(Date::builder().year(2025).month(5).day(20).build())
+            .transaction_date(
+                Date::builder()
+                    .year(2025)
+                    .month(Month::try_from(5).expect("LEQ 12"))
+                    .day(Day::try_from(20).unwrap())
+                    .build(),
+            )
             .quantity(1.0)
             .unit_price(145.0)
             .currency(Currency::SEK)
@@ -386,14 +453,22 @@ impl PaymentInformation {
     }
 }
 
-impl ProtoInput {
+impl DataFromDisk {
     pub fn sample() -> Self {
-        ProtoInput::builder()
+        DataFromDisk::builder()
             .information(ProtoInvoiceInfo::sample())
             .client(CompanyInformation::sample_client())
             .vendor(CompanyInformation::sample_vendor())
             .payment_info(PaymentInformation::sample())
             .services_price(ConsultingService::sample())
+            .expensed_months(ExpensedMonths::new(IndexMap::from_iter([(
+                YearAndMonth::sample(),
+                vec![
+                    Item::sample_expense_breakfast(),
+                    Item::sample_expense_coffee(),
+                    Item::sample_expense_sandwich(),
+                ],
+            )])))
             .build()
     }
 }
@@ -406,6 +481,6 @@ mod tests {
 
     #[test]
     fn test_serialization_sample() {
-        assert_ron_snapshot!(ProtoInput::sample())
+        assert_ron_snapshot!(DataFromDisk::sample())
     }
 }

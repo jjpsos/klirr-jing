@@ -1611,12 +1611,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "invoice-typst-cli"
+name = "invoice"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "clap",
  "colored",
+ "derive_more",
  "fern",
  "invoice-typst-logic",
  "invoice-typst-render",
