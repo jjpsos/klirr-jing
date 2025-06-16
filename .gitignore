@@ -1,3 +1,2 @@
 /target
-output.pdf
-crates/render/src/invoice.pdf
+invoices/**

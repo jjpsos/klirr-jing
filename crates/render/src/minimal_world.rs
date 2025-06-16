@@ -2,7 +2,6 @@ use crate::prelude::*;
 
 use chrono::{DateTime, Datelike, FixedOffset, Local};
 use invoice_typst_logic::prelude::TypedBuilder;
-use std::path::Path;
 use typst::{
     Library, World,
     foundations::{Bytes, Datetime},

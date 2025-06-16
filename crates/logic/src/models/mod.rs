@@ -14,6 +14,7 @@ mod payment_terms;
 mod postal_address;
 mod purchase_order;
 mod street_address;
+mod valid_input;
 mod year;
 
 pub use company_information::*;
@@ -32,4 +33,5 @@ pub use payment_terms::*;
 pub use postal_address::*;
 pub use purchase_order::*;
 pub use street_address::*;
+pub use valid_input::*;
 pub use year::*;

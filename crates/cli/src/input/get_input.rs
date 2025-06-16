@@ -6,9 +6,9 @@ use crate::prelude::*;
 #[command(about = "Generate an invoice PDF", long_about = None)]
 pub struct Input {
     /// The month for which the invoice is generated.
-    #[arg(long)]
+    #[arg(long, short = 'm', default_value_t = TargetMonth::Last)]
     #[getset(get = "pub")]
-    month: Option<TargetMonth>,
+    month: TargetMonth,
 
     /// The items to be invoiced, either expenses our consulting services
     /// with an optional number of days off.
@@ -16,18 +16,12 @@ pub struct Input {
     #[getset(get = "pub")]
     items: Option<TargetItems>,
 
-    /// The path to save the output PDF file.
-    #[arg(long)]
-    output_path: Option<PathBuf>,
+    /// An optional override of where to save the output PDF file.
+    #[arg(long, short = 'o')]
+    out: Option<PathBuf>,
 }
 
 impl Input {
-    fn _output_path(&self) -> PathBuf {
-        self.output_path
-            .clone()
-            .unwrap_or(PathBuf::from("output.pdf"))
-    }
-
     fn _invoiced_items(&self) -> Result<InvoicedItems> {
         match self.items.clone().unwrap_or_default() {
             TargetItems::Ooo { days } => Ok(InvoicedItems::Service {
@@ -41,12 +35,23 @@ impl Input {
         }
     }
 
-    pub fn parsed(&self) -> Result<ValidInput> {
+    pub fn parsed(self) -> Result<ValidInput> {
+        if let Some(path) = &self.out {
+            if !path
+                .parent()
+                .expect("unlikely you specified '/invoice.pdf'")
+                .exists()
+            {
+                Err(Error::SpecifiedOutputPathDoesNotExist {
+                    path: path.display().to_string(),
+                })?;
+            }
+        }
         let items = self._invoiced_items()?;
         let valid = ValidInput::builder()
-            .month(self.month.unwrap_or_default())
+            .month(self.month.year_and_month())
             .items(items)
-            .output_path(self._output_path())
+            .maybe_output_path(self.out)
             .build();
         Ok(valid)
     }

@@ -27,7 +27,7 @@ fn _get_expensed_months() -> Result<ExpensedMonths> {
 pub fn read_data_from_disk() -> Result<DataFromDisk> {
     // Read the input data from a file or other source.
     // This is a placeholder function, you can add your own logic here.
-    info!("☑️ Reading data data...");
+    debug!("☑️ Reading data from disk...");
     let client = _get_client()?;
     let vendor = _get_vendor()?;
     let payment_info = _get_payment_info()?;
@@ -42,5 +42,6 @@ pub fn read_data_from_disk() -> Result<DataFromDisk> {
         .information(proto_invoice_info)
         .expensed_months(expensed_months)
         .build();
+    debug!("✅ Read data from disk!");
     Ok(input_data)
 }

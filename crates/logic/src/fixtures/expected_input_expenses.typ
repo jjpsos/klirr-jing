@@ -53,6 +53,9 @@
       ),
     ),
   ),
+  output_path: (
+    name: "2025-05-31_Bra_Detektiv_AB_expenses_invoice_334.pdf",
+  ),
   payment_info: (
     bank_name: "SEB",
     bic: "ESSESESS",

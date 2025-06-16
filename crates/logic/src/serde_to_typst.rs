@@ -75,15 +75,9 @@ mod tests {
     use super::*;
 
     macro_rules! test_data_to_typst {
-        ($sample:expr, $invoiced_items:expr, $expected:expr) => {{
+        ($sample:expr, $input:expr, $expected:expr) => {{
             let input = $sample
-                .to_partial(
-                    &YearAndMonth::builder()
-                        .year(2025)
-                        .month(Month::try_from(5).expect("LEQ 12"))
-                        .build(),
-                    &$invoiced_items,
-                )
+                .to_partial($input)
                 .unwrap()
                 .to_typst(ExchangeRatesMap::from_iter([
                     (Currency::GBP, UnitPrice::from(1.174)),
@@ -106,7 +100,10 @@ mod tests {
     fn sample_expenses_to_typst() {
         test_data_to_typst!(
             DataFromDisk::sample(),
-            InvoicedItems::Expenses,
+            ValidInput::builder()
+                .items(InvoicedItems::Expenses)
+                .month(YearAndMonth::sample())
+                .build(),
             include_str!("./fixtures/expected_input_expenses.typ")
         );
     }
@@ -115,7 +112,10 @@ mod tests {
     fn sample_services_to_typst() {
         test_data_to_typst!(
             DataFromDisk::sample(),
-            InvoicedItems::Service { days_off: None },
+            ValidInput::builder()
+                .items(InvoicedItems::Service { days_off: None })
+                .month(YearAndMonth::sample())
+                .build(),
             include_str!("./fixtures/expected_input_services.typ")
         );
     }

@@ -45,9 +45,15 @@ pub(crate) fn init_logging_with_level(log_level: log::LevelFilter) {
         .apply()
         .unwrap();
 
-    log::info!(
+    print!(
         "🪵 Logging initialized with level: {log_level} (if you see this message once, logging is not properly setup)"
     );
+    if let Some(log_level) = log_level.to_level() {
+        log::log!(
+            log_level,
+            "🪵 Logging initialized with level: {log_level} (if you see this message once, logging is not properly setup)"
+        );
+    }
 }
 
 fn parse_log_level_from_str(log_level: &str) -> log::LevelFilter {

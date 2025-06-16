@@ -1,3 +1,8 @@
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
 use derive_more::IsVariant;
 use indexmap::IndexMap;
 
@@ -5,6 +10,8 @@ use crate::prelude::*;
 
 pub type InputUnpriced = AbstractInput<LineItemsWithoutCost>;
 pub type DataTypstCompat = AbstractInput<LineItemsFlat>;
+
+pub const INVOICES_OUTPUT_DIR: &str = "invoices";
 
 /// The items being invoiced this month, either services or expenses.
 #[derive(Clone, Debug, Display, Serialize, Deserialize, IsVariant)]
@@ -80,11 +87,9 @@ fn get_expenses_for_month(
 }
 
 impl DataFromDisk {
-    pub fn to_partial(
-        self,
-        target_month: &YearAndMonth,
-        items: &InvoicedItems,
-    ) -> Result<InputUnpriced> {
+    pub fn to_partial(self, input: ValidInput) -> Result<InputUnpriced> {
+        let items = input.items();
+        let target_month = input.month();
         let invoice_date = target_month.to_date_end_of_month();
         let due_date = invoice_date.advance(self.information().terms());
         let is_expenses = items.is_expenses();
@@ -94,6 +99,21 @@ impl DataFromDisk {
             is_expenses,
             self.information.months_off_record(),
         );
+
+        let is_expenses_str_or_empty = if is_expenses { "_expenses" } else { "" };
+        let vendor_name = self.vendor.company_name().replace(' ', "_");
+
+        let output_path = input
+            .maybe_output_path()
+            .as_ref()
+            .cloned()
+            .map(OutputPath::AbsolutePath)
+            .unwrap_or_else(|| {
+                OutputPath::Name(format!(
+                    "{}_{}{}_invoice_{}.pdf",
+                    invoice_date, vendor_name, is_expenses_str_or_empty, number
+                ))
+            });
 
         let full_info = InvoiceInfoFull::builder()
             .due_date(due_date)
@@ -132,6 +152,7 @@ impl DataFromDisk {
             })
             .payment_info(self.payment_info)
             .vendor(self.vendor)
+            .output_path(output_path)
             .build();
 
         Ok(input_unpriced)
@@ -151,6 +172,7 @@ impl InputUnpriced {
             vendor: self.vendor,
             client: self.client,
             payment_info: self.payment_info,
+            output_path: self.output_path,
         })
     }
 }
@@ -240,6 +262,59 @@ pub struct AbstractInput<Items: Serialize + MaybeIsExpenses> {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     payment_info: PaymentInformation,
+
+    /// Where to save the output PDF file.
+    #[builder(setter(into))]
+    output_path: OutputPath,
+}
+
+/// Returns the workspace root by going up from `cli` to the root.
+fn workspace_root() -> PathBuf {
+    let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    crate_root
+        .parent() // "../"
+        .and_then(|p| p.parent()) // "../../"
+        .map(PathBuf::from)
+        .expect("Could not find workspace root from crate path")
+}
+
+/// Creates a folder at `WORKSPACE_ROOT/some/relative/path` if it doesn't exist.
+fn create_folder_relative_to_workspace(path: impl AsRef<Path>) -> Result<PathBuf> {
+    let workspace = workspace_root();
+    let target_path = workspace.join(path.as_ref());
+    let target_folder = target_path.parent().expect("Path should have a parent");
+    if !target_folder.exists() {
+        trace!(
+            "Target folder: '{}' does not exist, creating now...",
+            target_folder.display()
+        );
+        fs::create_dir_all(&target_path).map_err(|e| Error::FailedToCreateOutputDirectory {
+            underlying: format!("{:?}", e),
+        })?;
+        trace!("Created target folder: '{}'", target_folder.display());
+    }
+    Ok(target_path)
+}
+
+impl<Items: Serialize + MaybeIsExpenses> AbstractInput<Items> {
+    pub fn absolute_path(&self) -> Result<PathBuf> {
+        match &self.output_path {
+            OutputPath::AbsolutePath(path) => Ok(path.clone()),
+            OutputPath::Name(name) => {
+                let mut path = PathBuf::from(INVOICES_OUTPUT_DIR);
+                path.push(name);
+                create_folder_relative_to_workspace(&path)
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum OutputPath {
+    /// Manually overridden absolute path
+    AbsolutePath(PathBuf),
+    /// Relative path, automatically named
+    Name(String),
 }
 
 /// Bank account details for the vendor, used for international transfers.

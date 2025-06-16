@@ -6,6 +6,14 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// during PDF generation and manipulation.
 #[derive(Clone, Debug, ThisError)]
 pub enum Error {
+    /// The manually specified output path does not exist.
+    #[error("Specified output path does not exist: {path}")]
+    SpecifiedOutputPathDoesNotExist { path: String },
+
+    /// Failed to create the output directory for the PDF file.
+    #[error("Failed to create output directory: {underlying}")]
+    FailedToCreateOutputDirectory { underlying: String },
+
     /// Target month must have expenses, but it does not.
     #[error(
         "Target month {target_month} must have expenses, but it does not. Fill 
