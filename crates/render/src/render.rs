@@ -101,6 +101,7 @@ mod tests {
             ValidInput::builder()
                 .items(InvoicedItems::Expenses)
                 .month(YearAndMonth::sample())
+                .language(Language::EN)
                 .build(),
             fixture("expected_expenses.png"),
         );
@@ -113,6 +114,7 @@ mod tests {
             ValidInput::builder()
                 .items(InvoicedItems::Service { days_off: None })
                 .month(YearAndMonth::sample())
+                .language(Language::EN)
                 .build(),
             fixture("expected_services.png"),
         );
@@ -129,7 +131,7 @@ mod tests {
         );
         let new_image = generate_pdf_into_png_image(
             path_to_resource("src/invoice.typ"),
-            L18n::english(),
+            L18n::new(Language::EN).unwrap(),
             sample,
             input,
         );

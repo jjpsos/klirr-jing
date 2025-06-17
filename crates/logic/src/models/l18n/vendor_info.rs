@@ -34,16 +34,3 @@ pub struct L18nVendorInfo {
     #[getset(get = "pub")]
     vat_number: String,
 }
-
-impl L18nVendorInfo {
-    pub fn english() -> Self {
-        Self::builder()
-            .address("Address")
-            .bank("Bank")
-            .iban("IBAN")
-            .bic("BIC")
-            .organisation_number("Org. No.")
-            .vat_number("VAT No.")
-            .build()
-    }
-}

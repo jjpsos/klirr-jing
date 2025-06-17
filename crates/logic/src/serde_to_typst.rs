@@ -103,6 +103,7 @@ mod tests {
             ValidInput::builder()
                 .items(InvoicedItems::Expenses)
                 .month(YearAndMonth::sample())
+                .language(Language::EN)
                 .build(),
             include_str!("./fixtures/expected_input_expenses.typ")
         );
@@ -115,6 +116,7 @@ mod tests {
             ValidInput::builder()
                 .items(InvoicedItems::Service { days_off: None })
                 .month(YearAndMonth::sample())
+                .language(Language::EN)
                 .build(),
             include_str!("./fixtures/expected_input_services.typ")
         );
@@ -123,7 +125,7 @@ mod tests {
     #[test]
     fn l18n_english_to_typst_macro() {
         test_l18n_to_typst!(
-            &L18n::english(),
+            &L18n::new(Language::EN).unwrap(),
             include_str!("./fixtures/expected_l18n_english.typ")
         );
     }

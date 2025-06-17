@@ -25,28 +25,3 @@ pub struct L18nContent {
     #[getset(get = "pub")]
     month_names: [String; 12],
 }
-
-impl L18nContent {
-    pub fn english() -> Self {
-        Self::builder()
-            .client_info(L18nClientInfo::english())
-            .invoice_info(L18nInvoiceInfo::english())
-            .vendor_info(L18nVendorInfo::english())
-            .line_items(L18nLineItems::english())
-            .month_names([
-                "January".to_owned(),
-                "February".to_owned(),
-                "March".to_owned(),
-                "April".to_owned(),
-                "May".to_owned(),
-                "June".to_owned(),
-                "July".to_owned(),
-                "August".to_owned(),
-                "September".to_owned(),
-                "October".to_owned(),
-                "November".to_owned(),
-                "December".to_owned(),
-            ])
-            .build()
-    }
-}

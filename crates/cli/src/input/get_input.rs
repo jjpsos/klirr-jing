@@ -10,6 +10,11 @@ pub struct Input {
     #[getset(get = "pub")]
     month: TargetMonth,
 
+    /// The language for which the invoice is generated.
+    #[arg(long, short = 'l', default_value_t = Language::EN)]
+    #[getset(get = "pub")]
+    language: Language,
+
     /// The items to be invoiced, either expenses our consulting services
     /// with an optional number of days off.
     #[command(subcommand)]
@@ -51,6 +56,7 @@ impl Input {
         let valid = ValidInput::builder()
             .month(self.month.year_and_month())
             .items(items)
+            .language(*self.language())
             .maybe_output_path(self.out)
             .build();
         Ok(valid)

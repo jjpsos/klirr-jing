@@ -1,5 +1,5 @@
 L18n(
-  locale: "en",
+  language: "english",
   content: L18nContent(
     client_info: L18nClientInfo(
       to_company: "To:",

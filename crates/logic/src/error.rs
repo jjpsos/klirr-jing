@@ -52,11 +52,11 @@ pub enum Error {
     #[error("Failed to PaymentTerms NetDays from string: {invalid_string}")]
     FailedToParsePaymentTermsNetDays { invalid_string: String },
 
-    /// Failed to find the localization file for a specific locale.
-    #[error("Failed to find the localization file for locale: {locale}")]
+    /// Failed to find the localization file for a specific language.
+    #[error("Failed to find the localization file for language: {language}")]
     L18nNotFound {
-        /// The locale that was not found, e.g. "en" for English.
-        locale: String,
+        /// The language that was not found, e.g. "EN" for English.
+        language: Language,
     },
 
     /// Failed to parse a string into a Hexcolor
