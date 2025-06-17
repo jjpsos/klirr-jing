@@ -17,10 +17,9 @@
 //
 // Thank you for being a good person.
 
-use std::str::FromStr;
-
 use chrono::Local;
 use colored::Colorize;
+use std::str::FromStr;
 
 const RUST_LOG_ENV: &str = "RUST_LOG";
 
@@ -45,7 +44,7 @@ pub(crate) fn init_logging_with_level(log_level: log::LevelFilter) {
         .apply()
         .unwrap();
 
-    print!(
+    println!(
         "🪵 Logging initialized with level: {log_level} (if you see this message once, logging is not properly setup)"
     );
     if let Some(log_level) = log_level.to_level() {

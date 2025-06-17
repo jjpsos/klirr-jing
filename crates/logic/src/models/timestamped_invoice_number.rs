@@ -1,0 +1,29 @@
+use crate::prelude::*;
+
+/// An invoice number timestamp with year and month, e.g. `(237, 2025-05)`.
+#[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
+pub struct TimestampedInvoiceNumber {
+    /// A base offset for the invoice number, e.g. `237`.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    offset: u16,
+
+    /// The month and year for when the `offset` was used, e.g. `2025-05`.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    month: YearAndMonth,
+}
+
+impl TimestampedInvoiceNumber {
+    pub fn sample() -> Self {
+        Self::builder()
+            .offset(237u16)
+            .month(
+                YearAndMonth::builder()
+                    .year(2017)
+                    .month(Month::try_from(3).expect("LEQ 12"))
+                    .build(),
+            )
+            .build()
+    }
+}

@@ -1,0 +1,38 @@
+use crate::prelude::*;
+
+/// Bank account details for the vendor, used for international transfers.
+/// This includes the IBAN, bank name, and BIC.
+/// This is used to ensure that the client can pay the invoice correctly.
+#[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
+pub struct PaymentInformation {
+    /// The IBAN (International Bank Account Number) of the vendor's bank account,
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    iban: String,
+
+    /// The name of the vendor's bank, used for international transfers.
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    bank_name: String,
+
+    /// The BIC (Bank Identifier Code) of the vendor's bank, used for international
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    bic: String,
+
+    /// The currency of this invoice, e.g. `EUR`
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    currency: Currency,
+}
+
+impl PaymentInformation {
+    pub fn sample() -> Self {
+        Self::builder()
+            .bank_name("SEB")
+            .iban("SE21 9000 0123 9876 5432 1009")
+            .bic("ESSESESS")
+            .currency(Currency::EUR)
+            .build()
+    }
+}

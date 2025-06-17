@@ -10,6 +10,18 @@ pub enum PaymentTerms {
     Net(NetDays),
 }
 
+impl PaymentTerms {
+    pub fn net30() -> Self {
+        PaymentTerms::Net(NetDays::net30())
+    }
+}
+
+impl PaymentTerms {
+    pub fn sample() -> Self {
+        Self::net30()
+    }
+}
+
 #[derive(
     Clone, Copy, Debug, SerializeDisplay, DeserializeFromStr, TypedBuilder, Getters, Display,
 )]
@@ -41,11 +53,5 @@ impl NetDays {
         Self::builder()
             .due_in(Day::try_from(30).expect("LEQ 31 days"))
             .build()
-    }
-}
-
-impl PaymentTerms {
-    pub fn net30() -> Self {
-        PaymentTerms::Net(NetDays::net30())
     }
 }

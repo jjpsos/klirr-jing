@@ -4,3 +4,9 @@ use crate::prelude::*;
 #[derive(Clone, Debug, Display, Serialize, Deserialize, From, Deref)]
 #[serde(transparent)]
 pub struct InvoiceNumber(u16);
+
+impl InvoiceNumber {
+    pub fn sample() -> Self {
+        Self::from(9876)
+    }
+}

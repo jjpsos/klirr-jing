@@ -7,3 +7,9 @@ use crate::prelude::*;
 #[from(String, &'static str)]
 #[serde(transparent)]
 pub struct PurchaseOrder(String);
+
+impl PurchaseOrder {
+    pub fn sample() -> Self {
+        Self::from("PO-12345")
+    }
+}

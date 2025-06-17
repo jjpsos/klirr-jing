@@ -1,5 +1,5 @@
 ---
-source: crates/logic/src/models/l18n/mod.rs
+source: crates/logic/src/models/l18n/localization.rs
 expression: "&L18n::english()"
 ---
 L18n(

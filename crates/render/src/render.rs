@@ -10,7 +10,7 @@ pub fn render(layout_path: impl AsRef<Path>, l18n: L18n, data: DataTypstCompat) 
     let data_count = data_typst_str.len();
 
     debug!("☑️ Creating typst 'World' (environment/context), this usually takes ~2 seconds.");
-    let world = MinimalWorld::with_path(layout_path.as_ref(), l18n_typst_str, data_typst_str)?;
+    let world = TypstContext::with_path(layout_path.as_ref(), l18n_typst_str, data_typst_str)?;
     debug!("✅ Created typst 'World' (environment/context)");
 
     // Compile the Typst source into a PagedDocument (layouted pages).

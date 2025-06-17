@@ -40,7 +40,9 @@ pub struct Item {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     unit_price: UnitPrice,
-    /// The currency of the expense, e.g. `"EUR"`
+    /// The currency of the expense, e.g. `"EUR"`, this
+    /// is the currency in which the expense was paid,
+    /// and not necessarily the currency of the invoice.
     #[builder(setter(into))]
     #[getset(get = "pub")]
     currency: Currency,
@@ -52,6 +54,54 @@ pub struct Item {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     transaction_date: Date,
+}
+
+impl Item {
+    pub fn sample_expense_breakfast() -> Self {
+        Self::builder()
+            .name("Breakfast")
+            .transaction_date(
+                Date::builder()
+                    .year(2025)
+                    .month(Month::try_from(5).expect("LEQ 12"))
+                    .day(Day::try_from(20).unwrap())
+                    .build(),
+            )
+            .quantity(1.0)
+            .unit_price(145.0)
+            .currency(Currency::SEK)
+            .build()
+    }
+
+    pub fn sample_expense_coffee() -> Self {
+        Self::builder()
+            .name("Coffee")
+            .transaction_date(Date::sample())
+            .quantity(2.0)
+            .unit_price(4.0)
+            .currency(Currency::GBP)
+            .build()
+    }
+
+    pub fn sample_expense_sandwich() -> Self {
+        Self::builder()
+            .name("Sandwich")
+            .transaction_date(Date::sample())
+            .quantity(1.0)
+            .unit_price(7.0)
+            .currency(Currency::GBP)
+            .build()
+    }
+
+    pub fn sample_consulting_service() -> Self {
+        Self::builder()
+            .name("Agreed Consulting Fees")
+            .transaction_date(Date::sample())
+            .quantity(22.0)
+            .unit_price(500.0)
+            .currency(Currency::EUR)
+            .build()
+    }
 }
 
 /// An item with a total cost, calculated as `unit_price * quantity`.

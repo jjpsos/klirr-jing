@@ -6,6 +6,12 @@ use crate::prelude::*;
 #[serde(transparent)]
 pub struct HexColor(String);
 
+impl HexColor {
+    pub fn sample() -> Self {
+        Self::from_str("#E6007A").expect("Failed to create sample HexColor")
+    }
+}
+
 impl FromStr for HexColor {
     type Err = crate::prelude::Error;
 

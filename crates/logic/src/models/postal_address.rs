@@ -25,3 +25,28 @@ pub struct PostalAddress {
     #[getset(get = "pub")]
     city: String,
 }
+
+impl PostalAddress {
+    pub fn sample_client() -> Self {
+        Self::builder()
+            .city("London")
+            .country("England")
+            .street_address(StreetAddress::builder().line_1("221B Baker Street").build())
+            .zip("NW1 6XE")
+            .build()
+    }
+
+    pub fn sample_vendor() -> Self {
+        Self::builder()
+            .city("Stockholm")
+            .country("Sweden")
+            .street_address(
+                StreetAddress::builder()
+                    .line_1("Storgatan 45")
+                    .line_2("4 tr")
+                    .build(),
+            )
+            .zip("114 32")
+            .build()
+    }
+}

@@ -27,3 +27,25 @@ pub struct CompanyInformation {
     #[getset(get = "pub")]
     vat_number: String,
 }
+
+impl CompanyInformation {
+    pub fn sample_client() -> Self {
+        Self::builder()
+            .company_name("Holmes Ltd")
+            .contact_person("Sherlock Holmes")
+            .organisation_number("9876543-2101")
+            .postal_address(PostalAddress::sample_client())
+            .vat_number("GB987654321")
+            .build()
+    }
+
+    pub fn sample_vendor() -> Self {
+        Self::builder()
+            .company_name("Bra Detektiv AB")
+            .contact_person("Ture Sventon")
+            .organisation_number("556123-4567")
+            .postal_address(PostalAddress::sample_vendor())
+            .vat_number("SE556123456701")
+            .build()
+    }
+}

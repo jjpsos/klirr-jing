@@ -58,7 +58,9 @@ fn get_exchange_rate(date: Date, from: Currency, to: Currency) -> Result<UnitPri
 
 pub type ExchangeRatesMap = HashMap<Currency, UnitPrice>;
 
-pub fn get_exchange_rates_if_needed(items: &LineItemsWithoutCost) -> Result<ExchangeRatesMap> {
+pub fn get_exchange_rates_if_needed(
+    items: &LineItemsPricedInSourceCurrency,
+) -> Result<ExchangeRatesMap> {
     let Ok(expenses) = items.clone().try_unwrap_expenses() else {
         debug!("No expenses found, skipping exchange rate fetching.");
         return Ok(HashMap::default());
