@@ -34,3 +34,21 @@ pub fn save_pdf_location_to_tmp_file(pdf_location: PathBuf) -> Result<()> {
     };
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+    use test_log::test;
+
+    #[test]
+    fn test_save_pdf_location_to_tmp_file() {
+        let tmp_file = NamedTempFile::new().unwrap();
+        let tmp_file = tmp_file.path();
+        unsafe {
+            std::env::set_var("TMP_FILE_FOR_PATH_TO_PDF", tmp_file.display().to_string());
+        }
+        let path = get_tmp_file_for_path_to_pdf();
+        assert_eq!(path.unwrap(), PathBuf::from(tmp_file));
+    }
+}

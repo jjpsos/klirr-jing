@@ -38,18 +38,18 @@ pub struct DataFromDisk {
 }
 
 impl DataFromDisk {
+    pub fn validate(self) -> Result<Self> {
+        self.information.validate()?;
+        Ok(self)
+    }
+
     pub fn to_partial(self, input: ValidInput) -> Result<DataWithItemsPricedInSourceCurrency> {
         let items = input.items();
         let target_month = input.month();
         let invoice_date = target_month.to_date_end_of_month();
         let due_date = invoice_date.advance(self.information().terms());
         let is_expenses = items.is_expenses();
-        let number = calculate_invoice_number(
-            self.information().offset(),
-            target_month,
-            is_expenses,
-            self.information.months_off_record(),
-        );
+        let number = input.invoice_number(self.information());
 
         let is_expenses_str_or_empty = if is_expenses { "_expenses" } else { "" };
         let vendor_name = self.vendor.company_name().replace(' ', "_");
@@ -138,6 +138,7 @@ mod tests {
     use insta::assert_ron_snapshot;
 
     use super::*;
+    use test_log::test;
 
     #[test]
     fn test_serialization_sample() {

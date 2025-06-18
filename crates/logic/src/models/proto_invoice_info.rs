@@ -19,27 +19,36 @@ pub struct ProtoInvoiceInfo {
     offset: TimestampedInvoiceNumber,
 
     /// Record of months when we were 100% off, i.e. did not invoice for, e.g. `["2025-01", "2025-02"]`.
-    #[builder(setter(into))]
+    #[builder(setter(into), default)]
     #[getset(get = "pub")]
     months_off_record: MonthsOffRecord,
 
     /// The payment terms of this invoice, e.g. `Net { due_in: 30 }`
-    #[builder(setter(into))]
+    #[builder(setter(into), default)]
     #[getset(get = "pub")]
     terms: PaymentTerms,
 
     /// E.g. "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation."
-    #[builder(setter(into))]
+    #[builder(setter(into), default = String::new())]
     #[getset(get = "pub")]
     footer_text: String,
 
-    /// Hex color code for the color emphasis of the invoice, e.g. `"#E6007A"`.
-    #[builder(setter(into))]
+    /// Hex color code for the color emphasis of the invoice, e.g. `"#e6007a"`.
+    #[builder(setter(into), default)]
     #[getset(get = "pub")]
     emphasize_color_hex: HexColor,
 }
 
 impl ProtoInvoiceInfo {
+    pub fn validate(&self) -> Result<()> {
+        if self.months_off_record.contains(self.offset.month()) {
+            return Err(Error::OffsetMonthMustNotBeInRecordOfMonthsOff {
+                offset_month: *self.offset.month(),
+            });
+        }
+        Ok(())
+    }
+
     pub fn sample() -> Self {
         Self::builder()
             .purchase_order(PurchaseOrder::sample())
@@ -58,6 +67,7 @@ impl ProtoInvoiceInfo {
 mod tests {
 
     use super::*;
+    use test_log::test;
 
     #[test]
     fn test_advance() {

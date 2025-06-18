@@ -27,3 +27,35 @@ fn save_pdf(pdf: Pdf, pdf_path: impl AsRef<Path>) -> Result<PathBuf> {
     info!("✅ Saved PDF to: '{}'", pdf_path.as_ref().display());
     Ok(output_path)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+    use test_log::test;
+
+    #[test]
+    fn test_create_pdf() {
+        let input = ValidInput::builder().month(YearAndMonth::sample()).build();
+        let dummy_pdf_data = Vec::from(b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n");
+        let path = create_pdf(input, |_, _| {
+            // Simulate PDF rendering
+            Ok(Pdf::from(dummy_pdf_data.clone()))
+        })
+        .unwrap();
+        let result = std::fs::read(&path).unwrap();
+        assert_eq!(result, dummy_pdf_data);
+    }
+
+    #[test]
+    fn test_save_pdf() {
+        let tmp_file = NamedTempFile::new().unwrap();
+        let tmp_file_path = tmp_file.path();
+        let dummy_pdf_bytes = Vec::from(b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n");
+        let dummy_pdf = Pdf::from(dummy_pdf_bytes.clone());
+        let result = save_pdf(dummy_pdf, tmp_file_path);
+        assert!(result.is_ok());
+        assert!(tmp_file_path.exists());
+        assert_eq!(std::fs::read(tmp_file_path).unwrap(), dummy_pdf_bytes);
+    }
+}

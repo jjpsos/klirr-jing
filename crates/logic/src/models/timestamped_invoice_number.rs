@@ -6,7 +6,7 @@ pub struct TimestampedInvoiceNumber {
     /// A base offset for the invoice number, e.g. `237`.
     #[builder(setter(into))]
     #[getset(get = "pub")]
-    offset: u16,
+    offset: InvoiceNumber,
 
     /// The month and year for when the `offset` was used, e.g. `2025-05`.
     #[builder(setter(into))]
@@ -17,7 +17,7 @@ pub struct TimestampedInvoiceNumber {
 impl TimestampedInvoiceNumber {
     pub fn sample() -> Self {
         Self::builder()
-            .offset(237u16)
+            .offset(InvoiceNumber::from(237u16))
             .month(
                 YearAndMonth::builder()
                     .year(2017)

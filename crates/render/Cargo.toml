@@ -18,6 +18,8 @@ typed-builder.workspace = true
 getset.workspace = true
 
 [dev-dependencies]
-magick_rust = "1.0.0"                                                      
+magick_rust = "1.0.0"
 image-compare = "0.4.2"
 image = { version = "0.25", default-features = false, features = ["png"] }
+tempfile.workspace = true
+test-log.workspace = true

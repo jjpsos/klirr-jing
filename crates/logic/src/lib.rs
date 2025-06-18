@@ -1,9 +1,8 @@
 mod calendar_logic;
 mod create_pdf;
-mod error;
 mod models;
 mod pdf;
-mod prepare_input_data;
+mod prepare_data;
 mod read_data;
 mod save_pdf_location_to_tmp_file;
 mod serde_to_typst;
@@ -11,10 +10,9 @@ mod serde_to_typst;
 pub mod prelude {
     pub(crate) use crate::calendar_logic::*;
     pub use crate::create_pdf::*;
-    pub use crate::error::*;
     pub use crate::models::*;
     pub use crate::pdf::*;
-    pub use crate::prepare_input_data::*;
+    pub use crate::prepare_data::*;
     pub(crate) use crate::read_data::*;
     pub use crate::save_pdf_location_to_tmp_file::*;
     pub use crate::serde_to_typst::*;

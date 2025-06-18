@@ -87,6 +87,7 @@ mod tests {
     use magick_rust::{LayerMethod, MagickWand, magick_wand_genesis};
 
     use super::*;
+    use test_log::test;
 
     use std::env;
 

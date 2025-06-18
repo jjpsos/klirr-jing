@@ -3,12 +3,14 @@ use crate::prelude::*;
 #[derive(Debug, Clone, Display, TypedBuilder, Getters)]
 #[display("Month: {}, out: {:?}, items: {}, language: {}", month, maybe_output_path.as_ref().map(|d|d.display()), items, language)]
 pub struct ValidInput {
+    #[builder(setter(into), default = Language::EN)]
     #[getset(get = "pub")]
     language: Language,
 
     #[getset(get = "pub")]
     month: YearAndMonth,
 
+    #[builder(setter(into), default)]
     #[getset(get = "pub")]
     items: InvoicedItems,
 

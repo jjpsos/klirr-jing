@@ -86,6 +86,7 @@ pub fn get_exchange_rates_if_needed(
 #[cfg(test)]
 mod tests_frankfurter_api {
     use super::*;
+    use test_log::test;
 
     #[test]
     fn test_frankfurter_api_response() {

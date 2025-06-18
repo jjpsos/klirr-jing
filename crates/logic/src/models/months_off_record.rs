@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 /// Records periods of unpaid leave, each period spanning at least one month.
-#[derive(Clone, Debug, Serialize, Deserialize, From, Deref)]
+#[derive(Clone, Debug, Serialize, Deserialize, From, Deref, Default)]
 #[from(IndexSet<YearAndMonth>)]
 pub struct MonthsOffRecord(IndexSet<YearAndMonth>);
 impl MonthsOffRecord {

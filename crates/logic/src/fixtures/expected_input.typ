@@ -17,7 +17,7 @@
   ),
   information: (
     due_date: "2025-06-30",
-    emphasize_color_hex: "#E6007A",
+    emphasize_color_hex: "#e6007a",
     footer_text: "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
     invoice_date: "2025-05-31",
     number: 333,

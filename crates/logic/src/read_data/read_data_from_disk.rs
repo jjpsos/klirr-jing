@@ -1,39 +1,51 @@
 use crate::prelude::*;
 
-fn _get_client() -> Result<CompanyInformation> {
-    deserialize_contents_of_ron(Path::new("./input/data/client.ron"))
+fn client() -> Result<CompanyInformation> {
+    deserialize_contents_of_ron(directory_relative_workspace_with_path_components(
+        "./input/data/client.ron",
+    ))
 }
 
-fn _get_vendor() -> Result<CompanyInformation> {
-    deserialize_contents_of_ron(Path::new("./input/data/vendor.ron"))
+fn vendor() -> Result<CompanyInformation> {
+    deserialize_contents_of_ron(directory_relative_workspace_with_path_components(
+        "./input/data/vendor.ron",
+    ))
 }
 
-fn _get_payment_info() -> Result<PaymentInformation> {
-    deserialize_contents_of_ron(Path::new("./input/data/payment.ron"))
+fn payment_info() -> Result<PaymentInformation> {
+    deserialize_contents_of_ron(directory_relative_workspace_with_path_components(
+        "./input/data/payment.ron",
+    ))
 }
 
-fn _get_services_price() -> Result<ConsultingService> {
-    deserialize_contents_of_ron(Path::new("./input/data/consulting_service.ron"))
+fn services_price() -> Result<ConsultingService> {
+    deserialize_contents_of_ron(directory_relative_workspace_with_path_components(
+        "./input/data/consulting_service.ron",
+    ))
 }
 
-fn _get_proto_invoice_info() -> Result<ProtoInvoiceInfo> {
-    deserialize_contents_of_ron(Path::new("./input/data/invoice_info.ron"))
+fn proto_invoice_info() -> Result<ProtoInvoiceInfo> {
+    deserialize_contents_of_ron(directory_relative_workspace_with_path_components(
+        "./input/data/invoice_info.ron",
+    ))
 }
 
-fn _get_expensed_months() -> Result<ExpensedMonths> {
-    deserialize_contents_of_ron(Path::new("./input/data/expenses.ron"))
+fn expensed_months() -> Result<ExpensedMonths> {
+    deserialize_contents_of_ron(directory_relative_workspace_with_path_components(
+        "./input/data/expenses.ron",
+    ))
 }
 
 pub fn read_data_from_disk() -> Result<DataFromDisk> {
     // Read the input data from a file or other source.
     // This is a placeholder function, you can add your own logic here.
     debug!("☑️ Reading data from disk...");
-    let client = _get_client()?;
-    let vendor = _get_vendor()?;
-    let payment_info = _get_payment_info()?;
-    let service_prices = _get_services_price()?;
-    let proto_invoice_info = _get_proto_invoice_info()?;
-    let expensed_months = _get_expensed_months()?;
+    let client = client()?;
+    let vendor = vendor()?;
+    let payment_info = payment_info()?;
+    let service_prices = services_price()?;
+    let proto_invoice_info = proto_invoice_info()?;
+    let expensed_months = expensed_months()?;
     let input_data = DataFromDisk::builder()
         .client(client)
         .vendor(vendor)
@@ -43,5 +55,17 @@ pub fn read_data_from_disk() -> Result<DataFromDisk> {
         .expensed_months(expensed_months)
         .build();
     debug!("✅ Read data from disk!");
-    Ok(input_data)
+    input_data.validate()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_log::test;
+
+    #[test]
+    fn test_read_data_from_disk() {
+        let result = read_data_from_disk().unwrap();
+        assert_eq!(*result.payment_info().currency(), Currency::EUR);
+    }
 }

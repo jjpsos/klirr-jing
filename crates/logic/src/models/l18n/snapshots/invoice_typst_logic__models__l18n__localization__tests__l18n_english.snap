@@ -1,9 +1,9 @@
 ---
 source: crates/logic/src/models/l18n/localization.rs
-expression: "&L18n::english()"
+expression: "&L18n::new(Language::EN).unwrap()"
 ---
 L18n(
-  locale: "en",
+  language: "english",
   content: L18nContent(
     client_info: L18nClientInfo(
       to_company: "To:",

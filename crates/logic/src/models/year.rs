@@ -1,3 +1,5 @@
+use derive_more::Constructor;
+
 use crate::prelude::*;
 
 /// Years since birth of Jesus christ, e.g. 2025
@@ -15,6 +17,7 @@ use crate::prelude::*;
     Deserialize,
     From,
     Deref,
+    Constructor,
 )]
 pub struct Year(u16);
 

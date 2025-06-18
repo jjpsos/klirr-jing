@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[derive(Debug, Clone, Copy, Display, Default, Parser, FromStr)]
+#[derive(Debug, Clone, Copy, Display, Default, PartialEq, Parser, FromStr)]
 #[command(name = "invoice")]
 #[command(about = "Generate an invoice PDF", long_about = None)]
 pub enum TargetMonth {

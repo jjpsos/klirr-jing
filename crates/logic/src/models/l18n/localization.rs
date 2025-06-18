@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
 /// The language used and the content of the localization file.
 #[derive(Debug, Clone, Serialize, Deserialize, Getters, TypedBuilder)]
@@ -27,7 +27,11 @@ impl L18n {
     }
 
     fn load_from_file(language: Language) -> Result<Self> {
-        let path = format!("./input/l18n/{}.ron", language);
+        let dir = env::var("CARGO_MANIFEST_DIR").map_err(|_| Error::FileNotFound {
+            path: "CARGO_MANIFEST_DIR".to_owned(),
+        })?;
+        let path = format!("{}/../../input/l18n/{}.ron", dir, language);
+        println!("{}", path);
         deserialize_contents_of_ron(Path::new(&path))
     }
 }
@@ -47,6 +51,7 @@ mod tests {
     use insta::assert_ron_snapshot;
 
     use super::*;
+    use test_log::test;
 
     #[test]
     fn test_l18n_english() {

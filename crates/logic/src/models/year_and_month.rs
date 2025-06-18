@@ -1,3 +1,5 @@
+use derive_more::Constructor;
+
 use crate::prelude::*;
 
 /// A date relevant for the invoice, e.g. invoice date, due date or a transaction
@@ -14,6 +16,7 @@ use crate::prelude::*;
     DeserializeFromStr,
     TypedBuilder,
     Getters,
+    Constructor,
 )]
 #[display("{year:04}-{month:02}")]
 pub struct YearAndMonth {
@@ -26,61 +29,6 @@ pub struct YearAndMonth {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     month: Month,
-}
-
-impl YearAndMonth {
-    pub fn last_day_of_month(&self) -> Day {
-        match **self.month() {
-            1 | 3 | 5 | 7 | 8 | 10 | 12 => Day::try_from(31).expect("LEQ 31 days"),
-            4 | 6 | 9 | 11 => Day::try_from(30).expect("LEQ 31 days"),
-            2 => {
-                let year = **self.year();
-                if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
-                    Day::try_from(29).expect("LEQ 31 days")
-                } else {
-                    Day::try_from(28).expect("LEQ 31 days")
-                }
-            }
-            _ => unreachable!("Invalid month value"),
-        }
-    }
-
-    pub fn to_date_end_of_month(&self) -> Date {
-        Date::builder()
-            .year(self.year)
-            .month(self.month)
-            .day(self.last_day_of_month())
-            .build()
-    }
-
-    pub fn current() -> Self {
-        let today = chrono::Local::now().date_naive();
-        Self::builder()
-            .year(Year::from(today.year()))
-            .month(Month::try_from(today.month() as i32).expect("Chrono should return valid month"))
-            .build()
-    }
-
-    pub fn one_month_earlier(&self) -> Self {
-        let mut year = *self.year;
-        let mut month = *self.month;
-
-        if month == 1 {
-            year -= 1;
-            month = 12
-        } else {
-            month -= 1
-        }
-
-        Self::builder()
-            .year(Year::from(year))
-            .month(Month::try_from(month).expect("Should return valid month"))
-            .build()
-    }
-
-    pub fn last() -> Self {
-        Self::current().one_month_earlier()
-    }
 }
 
 impl YearAndMonth {

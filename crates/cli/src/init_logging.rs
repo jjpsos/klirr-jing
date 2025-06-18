@@ -89,6 +89,7 @@ pub fn init_logging() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_log::test;
 
     #[test]
     #[should_panic(expected = "")]
@@ -96,7 +97,7 @@ mod tests {
         init_logging_with_level_str("foobar");
     }
 
-    #[test]
+    #[::core::prelude::v1::test]
     fn test_init_logging() {
         if std::env::var(RUST_LOG_ENV).is_err() {
             unsafe {

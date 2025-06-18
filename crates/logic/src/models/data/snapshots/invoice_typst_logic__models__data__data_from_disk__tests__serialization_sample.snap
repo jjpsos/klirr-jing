@@ -1,5 +1,5 @@
 ---
-source: crates/logic/src/models/invoice_input_data.rs
+source: crates/logic/src/models/data/data_from_disk.rs
 expression: "DataFromDisk::sample()"
 ---
 DataFromDisk(
@@ -15,7 +15,7 @@ DataFromDisk(
     ]),
     terms: "Net 30",
     footer_text: "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
-    emphasize_color_hex: "#E6007A",
+    emphasize_color_hex: "#e6007a",
   ),
   vendor: CompanyInformation(
     contact_person: Some("Ture Sventon"),

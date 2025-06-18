@@ -34,7 +34,7 @@ pub struct InvoiceInfoFull {
     #[getset(get = "pub")]
     footer_text: String,
 
-    /// Hex color code for the color emphasis of the invoice, e.g. `"#E6007A"`.
+    /// Hex color code for the color emphasis of the invoice, e.g. `"#e6007a"`.
     #[builder(setter(into))]
     #[getset(get = "pub")]
     emphasize_color_hex: HexColor,

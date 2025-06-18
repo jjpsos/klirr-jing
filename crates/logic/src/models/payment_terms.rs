@@ -10,6 +10,12 @@ pub enum PaymentTerms {
     Net(NetDays),
 }
 
+impl Default for PaymentTerms {
+    fn default() -> Self {
+        Self::net30()
+    }
+}
+
 impl PaymentTerms {
     pub fn net30() -> Self {
         PaymentTerms::Net(NetDays::net30())

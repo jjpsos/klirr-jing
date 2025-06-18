@@ -45,7 +45,7 @@ pub struct DataFromDiskWithItemsOfKind<Items: Serialize + MaybeIsExpenses> {
 }
 
 /// Returns the workspace root by going up from `cli` to the root.
-fn workspace_root() -> PathBuf {
+pub fn workspace_root() -> PathBuf {
     let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     crate_root
         .parent() // "../"
@@ -54,10 +54,15 @@ fn workspace_root() -> PathBuf {
         .expect("Could not find workspace root from crate path")
 }
 
-/// Creates a folder at `WORKSPACE_ROOT/some/relative/path` if it doesn't exist.
-fn create_folder_relative_to_workspace(path: impl AsRef<Path>) -> Result<PathBuf> {
+/// Forms a path relative to the workspace root, e.g. `WORKSPACE_ROOT/some/relative/path`.
+pub fn directory_relative_workspace_with_path_components(path: impl AsRef<Path>) -> PathBuf {
     let workspace = workspace_root();
-    let target_path = workspace.join(path.as_ref());
+    workspace.join(path.as_ref())
+}
+
+/// Creates a folder at `WORKSPACE_ROOT/some/relative/path` if it doesn't exist.
+pub fn create_folder_relative_to_workspace(path: impl AsRef<Path>) -> Result<PathBuf> {
+    let target_path = directory_relative_workspace_with_path_components(path);
     let target_folder = target_path.parent().expect("Path should have a parent");
     if !target_folder.exists() {
         trace!(

@@ -16,3 +16,8 @@ fern = "0.7.1"
 clap = { version = "4.5.39", features = ["derive"] }
 log.workspace = true
 thiserror.workspace = true
+typed-builder.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+test-log.workspace = true

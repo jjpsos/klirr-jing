@@ -73,6 +73,7 @@ fn to_typst_value(value: &Value, indent: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_log::test;
 
     macro_rules! test_data_to_typst {
         ($sample:expr, $input:expr, $expected:expr) => {{
