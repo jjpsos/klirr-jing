@@ -3,6 +3,16 @@ use std::borrow::Borrow;
 use crate::prelude::*;
 
 impl YearAndMonth {
+    /// Returns the last day of the month for this `YearAndMonth`, e.g. if the
+    /// year is not a leap year, February will return 28, and for leap year
+    /// 29 is returned.
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    ///
+    /// let year_and_month = YearAndMonth::january(2025);
+    /// assert_eq!(year_and_month.last_day_of_month(), Day::try_from(31).unwrap());
+    /// ```
     pub fn last_day_of_month(&self) -> Day {
         match **self.month() {
             1 | 3 | 5 | 7 | 8 | 10 | 12 => Day::try_from(31).expect("LEQ 31 days"),
@@ -19,6 +29,17 @@ impl YearAndMonth {
         }
     }
 
+    /// Converts this `YearAndMonth` to a `Date` representing the last day of the month.
+    ///
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let month = YearAndMonth::january(2025);
+    /// let date = month.to_date_end_of_month();
+    /// assert_eq!(date.year(), &Year::from(2025));
+    /// assert_eq!(date.month(), &Month::January);
+    /// assert_eq!(date.day(), &Day::try_from(31).unwrap());
+    /// ```
     pub fn to_date_end_of_month(&self) -> Date {
         Date::builder()
             .year(*self.year())
@@ -35,6 +56,15 @@ impl YearAndMonth {
             .build()
     }
 
+    /// Returns a new `YearAndMonth` that is one month earlier than this one.
+    /// If the month is January, it will return December of the previous year.
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let month = YearAndMonth::january(2025);
+    /// let one_month_earlier = month.one_month_earlier();
+    /// assert_eq!(one_month_earlier, YearAndMonth::december(2024));
+    /// ```
     pub fn one_month_earlier(&self) -> Self {
         let mut year = **self.year();
         let mut month = **self.month();
@@ -52,10 +82,26 @@ impl YearAndMonth {
             .build()
     }
 
+    /// Returns a new `YearAndMonth` that is one month later than this one - by
+    /// reading the calendar - if the current month is December, it will return
+    /// January of the next year.
     pub fn last() -> Self {
         Self::current().one_month_earlier()
     }
 
+    /// Returns the number of months elapsed between this `YearAndMonth` and
+    /// another `YearAndMonth`.
+    ///
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let start = YearAndMonth::january(2025);
+    /// let end = YearAndMonth::april(2025);
+    /// assert_eq!(end.elapsed_months_since(start), 3);
+    /// ```
+    ///
+    /// # Panics
+    /// Panics if the `start` month is after the `end` month.
     pub fn elapsed_months_since(&self, start: impl Borrow<Self>) -> u16 {
         let end = self;
         let start = start.borrow();
@@ -73,6 +119,10 @@ impl YearAndMonth {
 }
 
 impl ValidInput {
+    /// Calculates the invoice number for the given `ProtoInvoiceInfo` based on
+    /// the target month and whether the items are expenses or services.
+    ///
+    /// See `calculate_invoice_number` for the logic.
     pub fn invoice_number(&self, information: &ProtoInvoiceInfo) -> InvoiceNumber {
         let items = self.items();
         let target_month = self.month();
@@ -86,7 +136,41 @@ impl ValidInput {
     }
 }
 
-fn calculate_invoice_number(
+/// Calculates the invoice number based on the offset, target month, whether
+/// the items are expenses, and the months off record.
+/// This function assumes that the `ProtoInvoiceInfo` has already been validated
+/// to ensure that the target month is not in the record of months off.
+/// /// It computes the invoice number by considering the elapsed months since
+/// the offset month, adjusting for any months that are off record, and
+/// adding an additional increment if the items are expenses.
+///
+/// ```
+/// extern crate invoice_typst_logic;
+/// use invoice_typst_logic::prelude::*;
+/// let offset = TimestampedInvoiceNumber::builder().offset(100).month(YearAndMonth::january(2024)).build();
+/// let target_month = YearAndMonth::august(2024);
+/// let is_expenses = true;
+/// let months_off_record = MonthsOffRecord::new([
+///   YearAndMonth::march(2024),
+///   YearAndMonth::april(2024),
+/// ]);
+/// let invoice_number = calculate_invoice_number(
+///     &offset,
+///     &target_month,
+///     is_expenses,
+///     &months_off_record,
+/// );
+///
+/// /// The expected invoice number is calculated as follows:
+/// /// - Offset is 100
+/// /// - Target month is August 2024, which is 7 months after January
+/// /// - Months off record are March and April, which are 2 months off
+/// /// - Since this is for expenses, we add 1 to the final invoice number.
+/// /// - Therefore, the invoice number should be 100 + 7 - 2 + 1 = 106
+/// let expected = InvoiceNumber::from(106);
+/// assert_eq!(invoice_number, expected);
+/// ```
+pub fn calculate_invoice_number(
     offset: &TimestampedInvoiceNumber,
     target_month: &YearAndMonth,
     is_expenses: bool,
@@ -116,6 +200,20 @@ fn calculate_invoice_number(
     InvoiceNumber::from(invoice_number)
 }
 
+/// Calculates the number of working days in a given month, excluding weekends.
+///
+/// # Errors
+/// Returns an error if the target month is in the record of months off.
+///
+/// ```
+/// extern crate invoice_typst_logic;
+/// use invoice_typst_logic::prelude::*;
+///
+/// let target_month = YearAndMonth::january(2024);
+/// let months_off_record = MonthsOffRecord::new([]);
+/// let working_days = working_days_in_month(&target_month, &months_off_record);
+/// assert_eq!(working_days.unwrap(), 23); // January 2024 has 23
+/// ```
 pub fn working_days_in_month(
     target_month: &YearAndMonth,
     months_off_record: &MonthsOffRecord,
@@ -160,6 +258,20 @@ pub fn working_days_in_month(
     Ok(working_days)
 }
 
+/// Retrieves the expenses for a specific month from a collection of expenses
+/// organized by `YearAndMonth`.
+///
+/// /// # Errors
+/// Returns an error if the target month does not have any expenses recorded.
+///
+/// ```
+/// extern crate invoice_typst_logic;
+/// use invoice_typst_logic::prelude::*;
+/// let target_month = YearAndMonth::january(2024);
+/// let expenses_for_months = IndexMap::from_iter([(YearAndMonth::january(2024), vec![Item::sample_expense_breakfast()])]);
+/// let expenses = get_expenses_for_month(&target_month, &expenses_for_months);
+/// assert_eq!(expenses.unwrap().len(), 1); // January 2024 has one expense
+/// ```
 pub fn get_expenses_for_month(
     target_month: &YearAndMonth,
     expenses_for_months: &IndexMap<YearAndMonth, Vec<Item>>,
@@ -181,37 +293,37 @@ mod tests {
     use test_log::test;
 
     /// 2025 is not a leap year
-    const JAN_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(1));
+    const JAN_2025: YearAndMonth = YearAndMonth::january(2025);
     /// 2025 is not a leap year
-    const APR_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(4));
+    const APR_2025: YearAndMonth = YearAndMonth::april(2025);
     /// 2025 is not a leap year
-    const MAY_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(5));
+    const MAY_2025: YearAndMonth = YearAndMonth::may(2025);
     /// 2025 is not a leap year
-    const JUNE_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(6));
+    const JUNE_2025: YearAndMonth = YearAndMonth::june(2025);
     /// 2025 is not a leap year
-    const JULY_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(7));
+    const JULY_2025: YearAndMonth = YearAndMonth::july(2025);
     /// 2025 is not a leap year
-    const AUG_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(8));
+    const AUG_2025: YearAndMonth = YearAndMonth::august(2025);
     /// 2025 is not a leap year
-    const SEPT_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(9));
+    const SEPT_2025: YearAndMonth = YearAndMonth::september(2025);
     /// 2025 is not a leap year
-    const DEC_2025: YearAndMonth = YearAndMonth::new(Year::new(2025), Month::new(12));
+    const DEC_2025: YearAndMonth = YearAndMonth::december(2025);
 
     /// 2026 is not a leap year
-    const JAN_2026: YearAndMonth = YearAndMonth::new(Year::new(2026), Month::new(1));
+    const JAN_2026: YearAndMonth = YearAndMonth::january(2026);
     /// 2026 is not a leap year
-    const JUNE_2026: YearAndMonth = YearAndMonth::new(Year::new(2026), Month::new(6));
+    const JUNE_2026: YearAndMonth = YearAndMonth::june(2026);
     /// 2026 is not a leap year
-    const JULY_2026: YearAndMonth = YearAndMonth::new(Year::new(2026), Month::new(7));
+    const JULY_2026: YearAndMonth = YearAndMonth::july(2026);
     /// 2026 is not a leap year
-    const AUG_2026: YearAndMonth = YearAndMonth::new(Year::new(2026), Month::new(8));
+    const AUG_2026: YearAndMonth = YearAndMonth::august(2026);
 
     /// 2028 is a leap year
-    const JAN_2028: YearAndMonth = YearAndMonth::new(Year::new(2028), Month::new(1));
+    const JAN_2028: YearAndMonth = YearAndMonth::january(2028);
     /// 2028 is a leap year
-    const FEB_2028: YearAndMonth = YearAndMonth::new(Year::new(2028), Month::new(2));
+    const FEB_2028: YearAndMonth = YearAndMonth::february(2028);
     /// 2028 is a leap year
-    const MAR_2028: YearAndMonth = YearAndMonth::new(Year::new(2028), Month::new(3));
+    const MAR_2028: YearAndMonth = YearAndMonth::march(2028);
 
     fn test_invoice_number(
         offset_no: impl Into<InvoiceNumber>,

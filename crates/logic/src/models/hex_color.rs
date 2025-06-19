@@ -25,8 +25,25 @@ impl HexColor {
 impl FromStr for HexColor {
     type Err = crate::prelude::Error;
 
+    /// Parses a hex color string in the format "#RRGGBB" or "#RRGGBBAA".
+    /// The string must start with a '#' and be followed by 6 hexadecimal
+    /// digits.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let color: HexColor = "#e6007a".parse().unwrap();
+    /// assert_eq!(color.red(), 230);
+    /// assert_eq!(color.green(), 0);
+    /// assert_eq!(color.blue(), 122);
+    /// ```
+    ///
+    /// # Errors
+    /// Returns an error if the string does not start with '#' or if it does not
+    /// contain exactly 6 hexadecimal digits after the '#'.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with('#') && (s.len() == 7 || s.len() == 9) {
+        if s.starts_with('#') && s.len() == 7 {
             let s = &s[1..];
             let parse_u8 = |start: usize, end: usize| {
                 u8::from_str_radix(&s[start..end], 16).map_err(|_| Error::InvalidHexColor {

@@ -12,7 +12,36 @@ pub struct ExchangeRates {
     rates: HashMap<Currency, UnitPrice>,
 }
 impl ExchangeRates {
-    pub fn convert(&self, unit_price: UnitPrice, currency: Currency) -> Result<UnitPrice> {
+    /// Converts a given `unit_price` from the `currency` to the `target_currency`.
+    /// If the `currency` is the same as the `target_currency`, it returns the `unit_price
+    /// as is.
+    /// If the `currency` is not found in the exchange rates, it returns an error.
+    /// If the conversion is successful, it returns the converted `UnitPrice`.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let exchange_rates = ExchangeRates::builder()
+    ///     .target_currency(Currency::EUR)
+    ///     .rates(HashMap::from([
+    ///         (Currency::USD, UnitPrice::from(0.85)),
+    ///         (Currency::GBP, UnitPrice::from(1.1)),
+    ///     ]))
+    ///     .build();
+    /// let converted = exchange_rates.convert(100.0, Currency::USD).unwrap();
+    /// assert_eq!(*converted, 85.0);
+    /// ```
+    ///
+    /// # Errors
+    /// Returns an error if the `currency` is not found in the exchange rates.
+    ///
+    pub fn convert(
+        &self,
+        unit_price: impl Into<UnitPrice>,
+        currency: Currency,
+    ) -> Result<UnitPrice> {
+        let unit_price = unit_price.into();
         if self.target_currency == currency {
             return Ok(unit_price);
         }

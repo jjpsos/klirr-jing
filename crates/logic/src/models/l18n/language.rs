@@ -48,3 +48,29 @@ impl FromStr for Language {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use insta::assert_debug_snapshot;
+    use test_log::test;
+
+    #[test]
+    fn test_language_debug() {
+        assert_debug_snapshot!(Language::EN, @"EN");
+        assert_debug_snapshot!(Language::SV, @"SV");
+    }
+
+    #[test]
+    fn test_language_display() {
+        assert_eq!(Language::EN.to_string(), "english");
+        assert_eq!(Language::SV.to_string(), "swedish");
+    }
+
+    #[test]
+    fn test_language_from_str() {
+        assert_eq!("en".parse::<Language>().unwrap(), Language::EN);
+        assert_eq!("sv".parse::<Language>().unwrap(), Language::SV);
+        assert!("unknown".parse::<Language>().is_err());
+    }
+}

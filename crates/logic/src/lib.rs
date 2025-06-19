@@ -8,7 +8,7 @@ mod save_pdf_location_to_tmp_file;
 mod serde_to_typst;
 
 pub mod prelude {
-    pub(crate) use crate::calendar_logic::*;
+    pub use crate::calendar_logic::*;
     pub use crate::create_pdf::*;
     pub use crate::models::*;
     pub use crate::pdf::*;

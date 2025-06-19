@@ -15,6 +15,19 @@ impl ExpensedMonths {
         }
     }
 
+    /// Checks if the given month has expenses recorded.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let month = YearAndMonth::january(2024);
+    /// let expenses = ExpensedMonths::new(IndexMap::from_iter([
+    ///     (month.clone(), vec![Item::sample_expense_coffee()]),
+    /// ]));
+    /// assert!(expenses.contains(&month));
+    /// assert!(!expenses.contains(&YearAndMonth::february(2024)));
+    /// ```
     pub fn contains(&self, month: &YearAndMonth) -> bool {
         self.expenses_for_months.contains_key(month)
     }

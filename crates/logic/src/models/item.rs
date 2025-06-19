@@ -2,26 +2,6 @@ use std::str::FromStr;
 
 use crate::prelude::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize, Getters, TypedBuilder)]
-pub struct ConsultingService {
-    /// Description of the consulting service, e.g. `"App development"`
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    name: String,
-    /// The cost per item
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    unit_price: UnitPrice,
-}
-impl ConsultingService {
-    pub fn sample() -> Self {
-        Self::builder()
-            .name("App development".to_string())
-            .unit_price(UnitPrice::from(350.0))
-            .build()
-    }
-}
-
 #[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize, Getters, TypedBuilder)]
 #[display(
     "{}: {}{} #{} @{}",
@@ -104,30 +84,27 @@ impl Item {
     }
 }
 
-/// An item with a total cost, calculated as `unit_price * quantity`.
-#[derive(Clone, Debug, Serialize, Deserialize, Deref, From, Getters, TypedBuilder)]
-pub struct ItemConvertedIntoTargetCurrency {
-    /// An item in the currency it was paid in.
-    #[deref]
-    #[serde(flatten)]
-    in_source_currency: Item,
-
-    /// The total cost of the item, calculated as `unit_price * quantity`
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    total_cost: Cost,
-}
-
-#[derive(Clone, Copy, Display, Debug, PartialEq, Serialize, Deserialize, From, Deref)]
-pub struct Quantity(f64);
-
-#[derive(Clone, Copy, Display, Debug, PartialEq, Default, Serialize, Deserialize, From, Deref)]
-pub struct Cost(f64);
-
-#[derive(Clone, Copy, Display, PartialEq, Debug, Serialize, Deserialize, From, Deref)]
-pub struct UnitPrice(f64);
-
 impl Item {
+    /// Converts the item into a new item with the total cost calculated
+    /// in the target currency, using the provided exchange rates.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let item = Item::from_str("Coffee,2.5, EUR,3.0, 2025-05-31").expect("Failed to parse Item");
+    /// let exchange_rates = ExchangeRates::builder()
+    ///     .target_currency(Currency::USD)
+    ///     .rates(HashMap::from([
+    ///         (Currency::EUR, UnitPrice::from(1.2)),
+    ///         (Currency::GBP, UnitPrice::from(1.5)),
+    ///     ]))
+    ///     .build();
+    /// let converted_item = item.converting_currency_and_calculating_total_cost(&exchange_rates).expect("Failed to convert item");
+    /// assert_eq!(converted_item.name(), "Coffee");
+    /// assert_eq!(**converted_item.unit_price(), 3.0); // EUR to USD conversion
+    /// assert_eq!(converted_item.currency(), &Currency::USD);
+    /// ```
     pub fn converting_currency_and_calculating_total_cost(
         self,
         exchange_rates: &ExchangeRates,
@@ -136,7 +113,18 @@ impl Item {
         Ok(converted_rates.with_total_cost())
     }
 
-    fn with_total_cost(self) -> ItemConvertedIntoTargetCurrency {
+    /// Maps an `Item` into an `ItemConvertedIntoTargetCurrency` with the total cost
+    /// calculated in the source currency.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let item = Item::from_str("Coffee,2.5, EUR,3.0, 2025-05-31").expect("Failed to parse Item");
+    /// let converted_item = item.with_total_cost();
+    /// assert_eq!(**converted_item.total_cost(), 7.5); // 2.5 * 3.0
+    /// ```
+    pub fn with_total_cost(self) -> ItemConvertedIntoTargetCurrency {
         let cost = Cost::from(**self.quantity() * **self.unit_price());
         ItemConvertedIntoTargetCurrency::builder()
             .in_source_currency(self.clone())
@@ -144,6 +132,8 @@ impl Item {
             .build()
     }
 
+    /// Converts the item into a new item with the unit price converted to the target currency
+    /// using the provided exchange rates.
     fn with_exchange_rates(self, exchange_rates: &ExchangeRates) -> Result<Self> {
         let converted_unit_price = exchange_rates.convert(self.unit_price, self.currency)?;
         Ok(Self::builder()

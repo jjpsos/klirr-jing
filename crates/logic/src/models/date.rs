@@ -35,6 +35,20 @@ pub struct Date {
 impl std::str::FromStr for Date {
     type Err = crate::prelude::Error;
 
+    /// Parses a date in the format "YYYY-MM-DD", e.g. "2025-05-23".
+    /// # Errors
+    /// Returns an error if the string is not in the correct format or if the
+    /// year, month, or day is invalid.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let date: Date = "2025-05-23".parse().unwrap();
+    /// assert_eq!(date.year(), &Year::from(2025));
+    /// assert_eq!(date.month(), &Month::try_from(5).unwrap());
+    /// assert_eq!(date.day(), &Day::try_from(23).unwrap());    
+    /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.split('-').collect();
         if parts.len() != 3 {

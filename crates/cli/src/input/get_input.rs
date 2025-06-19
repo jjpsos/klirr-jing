@@ -31,6 +31,8 @@ pub struct Input {
 }
 
 impl Input {
+    /// Maps `Option<TargetItems>` to `InvoicedItems`, e.g. for `TargetItems::Ooo { days }`
+    /// we map from `Option<u8>` to `Option<Day>`.
     fn _invoiced_items(&self) -> Result<InvoicedItems> {
         match self.items.clone().unwrap_or_default() {
             TargetItems::Ooo { days } => Ok(InvoicedItems::Service {

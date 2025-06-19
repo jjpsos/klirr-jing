@@ -32,11 +32,57 @@ pub struct YearAndMonth {
 }
 
 impl YearAndMonth {
+    pub const fn january(year: u16) -> Self {
+        Self::new(Year::new(year), Month::January)
+    }
+    pub const fn february(year: u16) -> Self {
+        Self::new(Year::new(year), Month::February)
+    }
+
+    pub const fn march(year: u16) -> Self {
+        Self::new(Year::new(year), Month::March)
+    }
+
+    pub const fn april(year: u16) -> Self {
+        Self::new(Year::new(year), Month::April)
+    }
+
+    pub const fn may(year: u16) -> Self {
+        Self::new(Year::new(year), Month::May)
+    }
+
+    pub const fn june(year: u16) -> Self {
+        Self::new(Year::new(year), Month::June)
+    }
+
+    pub const fn july(year: u16) -> Self {
+        Self::new(Year::new(year), Month::July)
+    }
+
+    pub const fn august(year: u16) -> Self {
+        Self::new(Year::new(year), Month::August)
+    }
+
+    pub const fn september(year: u16) -> Self {
+        Self::new(Year::new(year), Month::September)
+    }
+
+    pub const fn october(year: u16) -> Self {
+        Self::new(Year::new(year), Month::October)
+    }
+
+    pub const fn november(year: u16) -> Self {
+        Self::new(Year::new(year), Month::November)
+    }
+
+    pub const fn december(year: u16) -> Self {
+        Self::new(Year::new(year), Month::December)
+    }
+}
+
+impl YearAndMonth {
     pub fn sample() -> Self {
-        Self::builder()
-            .year(2025)
-            .month(Month::try_from(5).expect("LEQ 12"))
-            .build()
+        Self::may(2025)
     }
 }
 

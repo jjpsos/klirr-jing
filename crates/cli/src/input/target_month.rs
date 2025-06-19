@@ -8,6 +8,7 @@ pub enum TargetMonth {
     #[default]
     Last,
 }
+
 impl TargetMonth {
     pub fn year_and_month(&self) -> YearAndMonth {
         match self {

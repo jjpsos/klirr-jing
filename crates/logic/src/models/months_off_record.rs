@@ -4,10 +4,33 @@ use crate::prelude::*;
 #[derive(Clone, Debug, Serialize, Deserialize, From, Deref, Default)]
 #[from(IndexSet<YearAndMonth>)]
 pub struct MonthsOffRecord(IndexSet<YearAndMonth>);
+
 impl MonthsOffRecord {
+    /// Creates a new `MonthsOffRecord` from an iterator of `YearAndMonth`.
     pub fn new(periods: impl IntoIterator<Item = YearAndMonth>) -> Self {
         Self(IndexSet::from_iter(periods))
     }
+
+    /// Checks if this record contains a specific `YearAndMonth`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    ///
+    /// let periods = [
+    ///     YearAndMonth::builder().year(2023).month(Month::try_from(1).unwrap()).build(),
+    ///     YearAndMonth::builder().year(2024).month(Month::try_from(5).unwrap()).build(),
+    /// ];
+    /// let record = MonthsOffRecord::new(periods);
+    ///
+    /// let included = YearAndMonth::builder().year(2024).month(Month::try_from(5).unwrap()).build();
+    /// let not_included = YearAndMonth::builder().year(2022).month(Month::try_from(10).unwrap()).build();
+    ///
+    /// assert!(record.contains(&included));
+    /// assert!(!record.contains(&not_included));
+    /// ```
     pub fn contains(&self, year_and_month: &YearAndMonth) -> bool {
         self.0.contains(year_and_month)
     }

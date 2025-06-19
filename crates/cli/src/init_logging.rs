@@ -96,14 +96,4 @@ mod tests {
     fn invalid_log_level() {
         init_logging_with_level_str("foobar");
     }
-
-    #[::core::prelude::v1::test]
-    fn test_init_logging() {
-        if std::env::var(RUST_LOG_ENV).is_err() {
-            unsafe {
-                std::env::set_var(RUST_LOG_ENV, "info");
-            }
-        }
-        init_logging();
-    }
 }

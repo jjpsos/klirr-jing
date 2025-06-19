@@ -107,3 +107,24 @@ impl DataWithItemsPricedInSourceCurrency {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_log::test;
+
+    #[test]
+    fn test_get_absolute_path_with_absolute_path() {
+        let data = read_data_from_disk().unwrap();
+        let path_buf = PathBuf::from("/absolute/path/to/invoice.pdf");
+        let data = data
+            .to_partial(
+                ValidInput::builder()
+                    .maybe_output_path(path_buf.clone())
+                    .month(YearAndMonth::sample())
+                    .build(),
+            )
+            .unwrap();
+        assert_eq!(data.absolute_path().unwrap(), path_buf);
+    }
+}
