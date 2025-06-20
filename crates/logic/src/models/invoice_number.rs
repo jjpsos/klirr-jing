@@ -5,8 +5,8 @@ use crate::prelude::*;
 #[serde(transparent)]
 pub struct InvoiceNumber(u16);
 
-impl InvoiceNumber {
-    pub fn sample() -> Self {
+impl HasSample for InvoiceNumber {
+    fn sample() -> Self {
         Self::from(9876)
     }
 }

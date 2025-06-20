@@ -26,8 +26,8 @@ pub struct PaymentInformation {
     currency: Currency,
 }
 
-impl PaymentInformation {
-    pub fn sample() -> Self {
+impl HasSample for PaymentInformation {
+    fn sample() -> Self {
         Self::builder()
             .bank_name("SEB")
             .iban("SE21 9000 0123 9876 5432 1009")

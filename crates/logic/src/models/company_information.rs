@@ -28,6 +28,12 @@ pub struct CompanyInformation {
     vat_number: String,
 }
 
+impl HasSample for CompanyInformation {
+    fn sample() -> Self {
+        Self::sample_client()
+    }
+}
+
 impl CompanyInformation {
     pub fn sample_client() -> Self {
         Self::builder()

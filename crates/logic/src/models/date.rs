@@ -46,7 +46,7 @@ impl std::str::FromStr for Date {
     /// use invoice_typst_logic::prelude::*;
     /// let date: Date = "2025-05-23".parse().unwrap();
     /// assert_eq!(date.year(), &Year::from(2025));
-    /// assert_eq!(date.month(), &Month::try_from(5).unwrap());
+    /// assert_eq!(date.month(), &Month::May);
     /// assert_eq!(date.day(), &Day::try_from(23).unwrap());    
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -131,7 +131,7 @@ impl Date {
     pub fn sample() -> Self {
         Self::builder()
             .year(2025)
-            .month(Month::try_from(5).expect("LEQ 12 months"))
+            .month(Month::May)
             .day(Day::try_from(31).expect("LEQ 31 days"))
             .build()
     }
@@ -146,7 +146,7 @@ mod tests {
     fn test_date_from_str() {
         let sut = Date::from_str("2025-05-23").unwrap();
         assert_eq!(sut.year(), &Year::from(2025));
-        assert_eq!(sut.month(), &Month::try_from(5).unwrap());
+        assert_eq!(sut.month(), &Month::May);
         assert_eq!(sut.day(), &Day::try_from(23).unwrap());
     }
 
@@ -154,7 +154,7 @@ mod tests {
     fn test_year_month_from_str() {
         let sut = YearAndMonth::from_str("2025-05").unwrap();
         assert_eq!(sut.year(), &Year::from(2025));
-        assert_eq!(sut.month(), &Month::try_from(5).unwrap());
+        assert_eq!(sut.month(), &Month::May);
     }
 
     #[test]

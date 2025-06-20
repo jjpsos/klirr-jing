@@ -8,8 +8,8 @@ use crate::prelude::*;
 #[serde(transparent)]
 pub struct PurchaseOrder(String);
 
-impl PurchaseOrder {
-    pub fn sample() -> Self {
+impl HasSample for PurchaseOrder {
+    fn sample() -> Self {
         Self::from("PO-12345")
     }
 }

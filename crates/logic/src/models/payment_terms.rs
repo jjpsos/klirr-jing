@@ -17,13 +17,14 @@ impl Default for PaymentTerms {
 }
 
 impl PaymentTerms {
+    /// Creates a new `PaymentTerms` with net payment due in 30 days.
     pub fn net30() -> Self {
         PaymentTerms::Net(NetDays::net30())
     }
 }
 
-impl PaymentTerms {
-    pub fn sample() -> Self {
+impl HasSample for PaymentTerms {
+    fn sample() -> Self {
         Self::net30()
     }
 }
@@ -41,6 +42,17 @@ pub struct NetDays {
 impl FromStr for NetDays {
     type Err = crate::prelude::Error;
 
+    /// Tries to parse a string in the format "Net {days}", e.g. "Net 30".
+    /// /// # Errors
+    /// Returns an error if the string is not in the correct format or if
+    /// the number of days is invalid.
+    /// /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let net_days: NetDays = "Net 30".parse().unwrap();
+    /// assert_eq!(net_days.due_in(), &Day::try_from(30).unwrap());
+    /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let days = s
             .split("Net ")

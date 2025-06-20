@@ -13,3 +13,12 @@ pub struct ItemConvertedIntoTargetCurrency {
     #[getset(get = "pub")]
     total_cost: Cost,
 }
+
+impl HasSample for ItemConvertedIntoTargetCurrency {
+    fn sample() -> Self {
+        Self::builder()
+            .in_source_currency(Item::sample())
+            .total_cost(Cost::sample())
+            .build()
+    }
+}

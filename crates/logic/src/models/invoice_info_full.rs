@@ -39,3 +39,20 @@ pub struct InvoiceInfoFull {
     #[getset(get = "pub")]
     emphasize_color_hex: HexColor,
 }
+
+impl InvoiceInfoFull {
+    pub fn sample() -> Self {
+        Self::builder()
+            .number(InvoiceNumber::sample())
+            .invoice_date(Date::sample())
+            .due_date(Date::sample())
+            .purchase_order(PurchaseOrder::sample())
+            .terms(PaymentTerms::sample())
+            .footer_text(
+                "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation."
+                    .to_string(),
+            )
+            .emphasize_color_hex(HexColor::sample())
+            .build()
+    }
+}

@@ -10,7 +10,7 @@ DataFromDisk(
       month: "2017-03",
     ),
     months_off_record: MonthsOffRecord([
-      "2020-09",
+      "2020-12",
       "2021-03",
     ]),
     terms: "Net 30",

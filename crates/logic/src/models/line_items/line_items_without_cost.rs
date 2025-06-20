@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+/// Trait for types that can determine if they are expenses.
 pub trait MaybeIsExpenses {
     /// Returns true if this invoice is for expenses only.
     fn is_expenses(&self) -> bool;
@@ -20,4 +21,10 @@ pub enum LineItemsPricedInSourceCurrency {
     /// Expense incurred by the vendor, travel expenses for a conference/summit/
     /// retreat
     Expenses(Vec<Item>),
+}
+
+impl HasSample for LineItemsPricedInSourceCurrency {
+    fn sample() -> Self {
+        Self::Service(Item::sample())
+    }
 }

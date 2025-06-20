@@ -19,3 +19,13 @@ pub struct ValidInput {
     #[getset(get = "pub")]
     maybe_output_path: Option<PathBuf>,
 }
+
+impl HasSample for ValidInput {
+    fn sample() -> Self {
+        Self::builder()
+            .month(YearAndMonth::current())
+            .items(InvoicedItems::sample())
+            .maybe_output_path(Some(PathBuf::from("invoice.pdf")))
+            .build()
+    }
+}

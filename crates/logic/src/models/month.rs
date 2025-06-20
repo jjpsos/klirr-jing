@@ -25,6 +25,15 @@ impl std::fmt::Debug for Month {
 }
 
 impl Month {
+    /// Returns the month as a number, e.g. 1 for January, 2 for February, etc.
+    /// This is useful for serialization and comparisons.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// assert_eq!(Month::January.month(), &1);
+    /// assert_eq!(Month::December.month(), &12);
+    /// ```
     pub fn month(&self) -> &u8 {
         match self {
             Month::January => &1,
@@ -51,6 +60,18 @@ impl std::ops::Deref for Month {
 
 impl TryFrom<i32> for Month {
     type Error = crate::prelude::Error;
+
+    /// Attempts to convert an integer to a `Month`.
+    /// The integer must be between 1 and 12, inclusive.
+    /// If the integer is outside this range, an `Error::InvalidMonth` is returned
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let march = Month::try_from(3).unwrap();
+    /// assert_eq!(march.to_string(), "3".to_owned());
+    /// ```
     fn try_from(month: i32) -> Result<Self> {
         match month {
             1 => Ok(Month::January),

@@ -38,11 +38,42 @@ pub struct DataFromDisk {
 }
 
 impl DataFromDisk {
+    /// Validates the invoice information and returns a `Result<Self>`.
+    /// If the information is valid, it returns `Ok(self)`.
+    /// If the information is invalid
+    /// it returns an `Error` with the validation error.
+    /// # Errors
+    /// Returns an error if the invoice information is invalid.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let data = DataFromDisk::sample();
+    /// let result = data.validate();
+    /// assert!(result.is_ok(), "Expected validation to succeed, got: {:?}", result);
+    /// ```
     pub fn validate(self) -> Result<Self> {
         self.information.validate()?;
         Ok(self)
     }
 
+    /// Converts the `DataFromDisk` into a `DataWithItemsPricedInSourceCurrency`
+    /// using the provided `ValidInput`.
+    /// This method prepares the invoice data for rendering by creating an
+    /// `InvoiceInfoFull` and populating it with the necessary information.
+    /// It also calculates the invoice date, due date, and prepares the output path.
+    /// # Errors
+    /// Returns an error if the month is invalid or if there are issues with
+    /// retrieving expenses for the month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let data = DataFromDisk::sample();
+    /// let input = ValidInput::sample();
+    /// let result = data.to_partial(input);
+    /// assert!(result.is_ok(), "Expected conversion to succeed, got: {:?}", result);
+    /// ```
     pub fn to_partial(self, input: ValidInput) -> Result<DataWithItemsPricedInSourceCurrency> {
         let items = input.items();
         let target_month = input.month();
@@ -113,8 +144,8 @@ impl DataFromDisk {
     }
 }
 
-impl DataFromDisk {
-    pub fn sample() -> Self {
+impl HasSample for DataFromDisk {
+    fn sample() -> Self {
         DataFromDisk::builder()
             .information(ProtoInvoiceInfo::sample())
             .client(CompanyInformation::sample_client())

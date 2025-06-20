@@ -6,6 +6,12 @@ use crate::prelude::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display, Serialize, Deserialize, Deref, FromStr)]
 pub struct Day(u8);
 
+impl HasSample for Day {
+    fn sample() -> Self {
+        Self(1)
+    }
+}
+
 impl TryFrom<i32> for Day {
     type Error = crate::prelude::Error;
     fn try_from(day: i32) -> Result<Self> {

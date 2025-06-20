@@ -92,6 +92,7 @@ impl YearAndMonth {
     /// Returns the number of months elapsed between this `YearAndMonth` and
     /// another `YearAndMonth`.
     ///
+    /// # Examples
     /// ```
     /// extern crate invoice_typst_logic;
     /// use invoice_typst_logic::prelude::*;

@@ -46,6 +46,13 @@ impl Input {
         }
     }
 
+    /// Returns a `ValidInput` from the parsed command line arguments.
+    /// This function validates the input, e.g. checks if the output path exists,
+    /// and returns a `ValidInput` that can be used to generate the invoice.
+    ///
+    /// # Errors
+    /// Returns an error if the input is invalid, e.g. if the output path does not
+    /// exist or if the items are not specified correctly.
     pub fn parsed(self) -> Result<ValidInput> {
         if let Some(path) = &self.out {
             let parent = path
@@ -68,6 +75,14 @@ impl Input {
     }
 }
 
+/// Reads the input from the command line and returns a `ValidInput`.
+/// This function parses the command line arguments
+/// and validates them, returning an error if the input is
+/// invalid.
+///
+/// # Errors
+/// Returns an error if the input is invalid, e.g. if the output path does not
+/// exist or if the items are not specified correctly.
 pub fn get_input() -> Result<ValidInput> {
     let input = Input::parse();
     input.parsed()

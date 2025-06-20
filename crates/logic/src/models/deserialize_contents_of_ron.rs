@@ -1,10 +1,24 @@
 use crate::prelude::*;
 use serde::de::DeserializeOwned;
 
+/// Returns the type name of the generic type `T` as a `String`.
+///
+/// # Examples
+/// ```
+/// extern crate invoice_typst_logic;
+/// use invoice_typst_logic::prelude::*;
+/// let type_name = type_name::<CompanyInformation>();
+/// assert!(type_name.ends_with("CompanyInformation"));
+/// ```
 pub fn type_name<T>() -> String {
     std::any::type_name::<T>().to_string()
 }
 
+/// Tries to load the contents of a file at the given path and deserialize it from RON format into the specified type.
+///
+/// # Throws
+/// - `Error::FileNotFound` if the file does not exist or cannot be read
+/// - `Error::Deserialize` if the contents cannot be deserialized into the specified type
 pub fn deserialize_contents_of_ron<T: DeserializeOwned>(path: impl AsRef<Path>) -> Result<T> {
     debug!(
         "☑️ Deserializing {} from {}",

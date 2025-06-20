@@ -8,6 +8,26 @@ pub type DataWithItemsPricedInSourceCurrency =
     DataFromDiskWithItemsOfKind<LineItemsPricedInSourceCurrency>;
 pub type DataTypstCompat = DataFromDiskWithItemsOfKind<LineItemsFlat>;
 
+pub trait HasSample: Sized {
+    /// Returns a sample instance of the type.
+    fn sample() -> Self;
+}
+
+impl<Items: Serialize + MaybeIsExpenses + HasSample> HasSample
+    for DataFromDiskWithItemsOfKind<Items>
+{
+    fn sample() -> Self {
+        Self::builder()
+            .information(InvoiceInfoFull::sample())
+            .vendor(CompanyInformation::sample())
+            .client(CompanyInformation::sample())
+            .line_items(Items::sample())
+            .payment_info(PaymentInformation::sample())
+            .output_path(OutputPath::Name("invoice.pdf".into()))
+            .build()
+    }
+}
+
 /// The input data for the invoice, which includes information about the invoice,
 /// the vendor, and the client and the products/services included in the invoice.
 #[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
@@ -78,6 +98,30 @@ pub fn create_folder_relative_to_workspace(path: impl AsRef<Path>) -> Result<Pat
 }
 
 impl<Items: Serialize + MaybeIsExpenses> DataFromDiskWithItemsOfKind<Items> {
+    /// Returns the absolute path where the invoice will be saved.
+    /// If the path is relative, it will be created relative to the workspace root.
+    /// If the path is absolute, it will be returned as is.
+    ///
+    /// # Errors
+    /// Returns an error if the path is relative and the folder cannot be created,
+    /// or if the path is absolute but invalid.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let data = DataWithItemsPricedInSourceCurrency::builder()
+    ///    .information(InvoiceInfoFull::sample())
+    ///   .vendor(CompanyInformation::sample())
+    ///   .client(CompanyInformation::sample())
+    ///   .line_items(LineItemsPricedInSourceCurrency::sample())
+    ///   .payment_info(PaymentInformation::sample())
+    ///   .output_path(OutputPath::Name("invoice.pdf".into()))
+    ///   .build();
+    ///
+    /// let absolute_path = data.absolute_path().unwrap();
+    /// assert!(absolute_path.ends_with("invoice.pdf"));
+    /// ```
     pub fn absolute_path(&self) -> Result<PathBuf> {
         match &self.output_path {
             OutputPath::AbsolutePath(path) => Ok(path.clone()),
@@ -91,6 +135,23 @@ impl<Items: Serialize + MaybeIsExpenses> DataFromDiskWithItemsOfKind<Items> {
 }
 
 impl DataWithItemsPricedInSourceCurrency {
+    /// Converts the `DataWithItemsPricedInSourceCurrency` into a `DataTypstCompat`
+    /// which is compatible with Typst rendering.
+    /// This method prepares the invoice data for rendering by creating an
+    /// `ExchangeRates` object and converting the line items into a flat structure.
+    ///
+    /// # Errors
+    /// Returns an error if the line items cannot be converted to a flat structure.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let data = DataWithItemsPricedInSourceCurrency::sample();
+    /// let exchange_rates_map = ExchangeRatesMap::from_iter([(Currency::GBP, UnitPrice::from(10.0)), (Currency::EUR, UnitPrice::from(8.0))]);
+    /// let result = data.to_typst(exchange_rates_map);
+    /// assert!(result.is_ok(), "Expected conversion to succeed, got: {:?}", result);
+    /// ```
     pub fn to_typst(self, exchange_rates_map: ExchangeRatesMap) -> Result<DataTypstCompat> {
         let exchange_rates = ExchangeRates::builder()
             .rates(exchange_rates_map)

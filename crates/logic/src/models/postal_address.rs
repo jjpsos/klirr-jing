@@ -4,7 +4,7 @@ use crate::prelude::*;
 #[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
 pub struct PostalAddress {
     /// The street address of a company, e.g.
-    /// ```no_run
+    /// ```text
     /// "10 West Smithfield"
     /// "C/o Other company"
     /// "2nd floor"
@@ -24,6 +24,12 @@ pub struct PostalAddress {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     city: String,
+}
+
+impl HasSample for PostalAddress {
+    fn sample() -> Self {
+        Self::sample_client()
+    }
 }
 
 impl PostalAddress {

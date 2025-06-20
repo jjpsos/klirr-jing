@@ -13,10 +13,20 @@ pub enum Language {
 }
 
 impl Language {
+    /// Returns all available languages as an iterator.
+    /// This can be used to iterate over all supported languages.
+    /// # Examples
+    /// ```
+    /// use invoice_typst_logic::prelude::*;
+    /// for lang in Language::all() {
+    ///     println!("Supported language: {}", lang);
+    /// }
+    /// ```
     pub fn all() -> impl Iterator<Item = Self> {
         Self::iter()
     }
 }
+
 impl fmt::Debug for Language {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let debug_str = match self {
@@ -28,6 +38,7 @@ impl fmt::Debug for Language {
 }
 
 impl fmt::Display for Language {
+    /// Formats the language as a human-readable string.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
             Language::EN => "english",
@@ -40,6 +51,21 @@ impl fmt::Display for Language {
 impl FromStr for Language {
     type Err = String;
 
+    /// Parses a language code or name into a `Language` enum.
+    /// Accepts "en", "english", "sv", and "swedish" (case-insensitive).
+    ///
+    /// # Errors
+    /// Returns an error if the string does not match any known language.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let lang: Language = "en".parse().unwrap();
+    /// assert_eq!(lang, Language::EN);
+    /// let lang: Language = "swedish".parse().unwrap();
+    /// assert_eq!(lang, Language::SV);
+    /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_ascii_lowercase().as_str() {
             "en" | "english" => Ok(Language::EN),

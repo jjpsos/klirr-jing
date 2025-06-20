@@ -75,6 +75,12 @@ pub enum Currency {
     DOT,
 }
 
+impl HasSample for Currency {
+    fn sample() -> Self {
+        Currency::EUR
+    }
+}
+
 // Display implementation to return ISO code
 impl fmt::Display for Currency {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

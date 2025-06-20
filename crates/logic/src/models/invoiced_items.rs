@@ -19,3 +19,11 @@ impl Default for InvoicedItems {
         Self::Service { days_off: None }
     }
 }
+
+impl HasSample for InvoicedItems {
+    fn sample() -> Self {
+        Self::Service {
+            days_off: Some(Day::sample()),
+        }
+    }
+}

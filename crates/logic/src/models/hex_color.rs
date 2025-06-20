@@ -2,11 +2,14 @@ use serde_with::DeserializeFromStr;
 
 use crate::prelude::*;
 
-#[derive(Clone, Debug, SerializeDisplay, DeserializeFromStr, derive_more::Display)]
+#[derive(Clone, Debug, SerializeDisplay, DeserializeFromStr, derive_more::Display, Getters)]
 #[display("#{:02x}{:02x}{:02x}", red, green, blue)]
 pub struct HexColor {
+    #[getset(get = "pub")]
     red: u8,
+    #[getset(get = "pub")]
     green: u8,
+    #[getset(get = "pub")]
     blue: u8,
 }
 
@@ -16,8 +19,8 @@ impl Default for HexColor {
     }
 }
 
-impl HexColor {
-    pub fn sample() -> Self {
+impl HasSample for HexColor {
+    fn sample() -> Self {
         Self::from_str("#e6007a").expect("Failed to create sample HexColor")
     }
 }
@@ -34,9 +37,9 @@ impl FromStr for HexColor {
     /// extern crate invoice_typst_logic;
     /// use invoice_typst_logic::prelude::*;
     /// let color: HexColor = "#e6007a".parse().unwrap();
-    /// assert_eq!(color.red(), 230);
-    /// assert_eq!(color.green(), 0);
-    /// assert_eq!(color.blue(), 122);
+    /// assert_eq!(*color.red(), 230);
+    /// assert_eq!(*color.green(), 0);
+    /// assert_eq!(*color.blue(), 122);
     /// ```
     ///
     /// # Errors

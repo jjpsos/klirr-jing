@@ -36,6 +36,12 @@ pub struct Item {
     transaction_date: Date,
 }
 
+impl HasSample for Item {
+    fn sample() -> Self {
+        Self::sample_expense_coffee()
+    }
+}
+
 impl Item {
     pub fn sample_expense_breakfast() -> Self {
         Self::builder()
@@ -43,7 +49,7 @@ impl Item {
             .transaction_date(
                 Date::builder()
                     .year(2025)
-                    .month(Month::try_from(5).expect("LEQ 12"))
+                    .month(Month::May)
                     .day(Day::try_from(20).unwrap())
                     .build(),
             )

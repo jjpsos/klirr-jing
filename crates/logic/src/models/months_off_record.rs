@@ -20,13 +20,13 @@ impl MonthsOffRecord {
     /// use invoice_typst_logic::prelude::*;
     ///
     /// let periods = [
-    ///     YearAndMonth::builder().year(2023).month(Month::try_from(1).unwrap()).build(),
-    ///     YearAndMonth::builder().year(2024).month(Month::try_from(5).unwrap()).build(),
+    ///     YearAndMonth::builder().year(2023).month(Month::January).build(),
+    ///     YearAndMonth::builder().year(2024).month(Month::May).build(),
     /// ];
     /// let record = MonthsOffRecord::new(periods);
     ///
-    /// let included = YearAndMonth::builder().year(2024).month(Month::try_from(5).unwrap()).build();
-    /// let not_included = YearAndMonth::builder().year(2022).month(Month::try_from(10).unwrap()).build();
+    /// let included = YearAndMonth::builder().year(2024).month(Month::May).build();
+    /// let not_included = YearAndMonth::builder().year(2022).month(Month::October).build();
     ///
     /// assert!(record.contains(&included));
     /// assert!(!record.contains(&not_included));
@@ -36,16 +36,16 @@ impl MonthsOffRecord {
     }
 }
 
-impl MonthsOffRecord {
-    pub fn sample() -> Self {
+impl HasSample for MonthsOffRecord {
+    fn sample() -> Self {
         Self::new([
             YearAndMonth::builder()
                 .year(2020)
-                .month(Month::try_from(9).expect("LEQ 12"))
+                .month(Month::December)
                 .build(),
             YearAndMonth::builder()
                 .year(2021)
-                .month(Month::try_from(3).expect("LEQ 12"))
+                .month(Month::March)
                 .build(),
         ])
     }

@@ -19,6 +19,8 @@ pub struct L18n {
 }
 
 impl L18n {
+    /// Tries to load a preloaded localization file for the given language.
+    /// If the language is not found in the preloaded map, it returns an error.
     pub fn new(language: Language) -> Result<Self> {
         let Some(content) = L18N_MAP.get(&language) else {
             return Err(Error::L18nNotFound { language });
@@ -26,6 +28,15 @@ impl L18n {
         Ok(content.clone())
     }
 
+    /// Tries to load the localization file for the given language.
+    /// If the file is not found, it returns an error.
+    /// The file is expected to be in the `input/l18n` directory
+    /// relative to the `CARGO_MANIFEST_DIR`.
+    /// If the file cannot be deserialized, it returns an error.
+    ///
+    /// # Errors
+    /// Returns an error if the file is not found or if it cannot be deserialized.
+    ///
     fn load_from_file(language: Language) -> Result<Self> {
         let dir = env::var("CARGO_MANIFEST_DIR").map_err(|_| Error::FileNotFound {
             path: "CARGO_MANIFEST_DIR".to_owned(),

@@ -4,6 +4,7 @@ use typst::layout::PagedDocument;
 use typst_pdf::PdfOptions;
 use typst_pdf::pdf;
 
+/// Renders a PDF document using Typst with the provided layout, localization, and data.
 pub fn render(layout_path: impl AsRef<Path>, l18n: L18n, data: DataTypstCompat) -> Result<Pdf> {
     let l18n_typst_str = to_typst_let(&l18n.content());
     let data_typst_str = to_typst_let(&data);

@@ -17,6 +17,7 @@ pub struct Environment {
     #[getset(get = "pub")]
     now: DateTime<Local>,
 }
+
 impl Default for Environment {
     fn default() -> Self {
         // Build the standard library (Typst definitions and styles).

@@ -39,17 +39,8 @@ pub struct ProtoInvoiceInfo {
     emphasize_color_hex: HexColor,
 }
 
-impl ProtoInvoiceInfo {
-    pub fn validate(&self) -> Result<()> {
-        if self.months_off_record.contains(self.offset.month()) {
-            return Err(Error::OffsetMonthMustNotBeInRecordOfMonthsOff {
-                offset_month: *self.offset.month(),
-            });
-        }
-        Ok(())
-    }
-
-    pub fn sample() -> Self {
+impl HasSample for ProtoInvoiceInfo {
+    fn sample() -> Self {
         Self::builder()
             .purchase_order(PurchaseOrder::sample())
             .terms(PaymentTerms::sample())
@@ -60,6 +51,27 @@ impl ProtoInvoiceInfo {
             .offset(TimestampedInvoiceNumber::sample())
             .months_off_record(MonthsOffRecord::sample())
             .build()
+    }
+}
+
+impl ProtoInvoiceInfo {
+    /// Validates the invoice information, ensuring that the offset month
+    /// is not in the record of months off.
+    ///
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let invoice_info = ProtoInvoiceInfo::sample();
+    /// assert!(invoice_info.validate().is_ok());
+    /// ```
+    pub fn validate(&self) -> Result<()> {
+        if self.months_off_record.contains(self.offset.month()) {
+            return Err(Error::OffsetMonthMustNotBeInRecordOfMonthsOff {
+                offset_month: *self.offset.month(),
+            });
+        }
+        Ok(())
     }
 }
 

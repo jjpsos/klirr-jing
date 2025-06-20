@@ -32,56 +32,153 @@ pub struct YearAndMonth {
 }
 
 impl YearAndMonth {
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let january = YearAndMonth::january(2025);
+    /// assert_eq!(*january.month(), Month::January);
+    /// ```
     pub const fn january(year: u16) -> Self {
         Self::new(Year::new(year), Month::January)
     }
+
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let february = YearAndMonth::february(2025);
+    /// assert_eq!(*february.month(), Month::February);
+    /// ```
     pub const fn february(year: u16) -> Self {
         Self::new(Year::new(year), Month::February)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let march = YearAndMonth::march(2025);
+    /// assert_eq!(*march.month(), Month::March);
+    /// ```
     pub const fn march(year: u16) -> Self {
         Self::new(Year::new(year), Month::March)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;    
+    /// let april = YearAndMonth::april(2025);
+    /// assert_eq!(*april.month(), Month::April);
+    /// ```
     pub const fn april(year: u16) -> Self {
         Self::new(Year::new(year), Month::April)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let may = YearAndMonth::may(2025);
+    /// assert_eq!(*may.month(), Month::May);
+    /// ```
     pub const fn may(year: u16) -> Self {
         Self::new(Year::new(year), Month::May)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let june = YearAndMonth::june(2025);
+    /// assert_eq!(*june.month(), Month::June);
+    /// ```
     pub const fn june(year: u16) -> Self {
         Self::new(Year::new(year), Month::June)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let july = YearAndMonth::july(2025);
+    /// assert_eq!(*july.month(), Month::July);
+    /// ```
     pub const fn july(year: u16) -> Self {
         Self::new(Year::new(year), Month::July)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let august = YearAndMonth::august(2025);
+    /// assert_eq!(*august.month(), Month::August);
+    /// ```
     pub const fn august(year: u16) -> Self {
         Self::new(Year::new(year), Month::August)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let september = YearAndMonth::september(2025);
+    /// assert_eq!(*september.month(), Month::September);
+    /// ```
     pub const fn september(year: u16) -> Self {
         Self::new(Year::new(year), Month::September)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let october = YearAndMonth::october(2025);
+    /// assert_eq!(*october.month(), Month::October);
+    /// ```
     pub const fn october(year: u16) -> Self {
         Self::new(Year::new(year), Month::October)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let november = YearAndMonth::november(2025);
+    /// assert_eq!(*november.month(), Month::November);
+    /// ```
     pub const fn november(year: u16) -> Self {
         Self::new(Year::new(year), Month::November)
     }
 
+    /// Creates a new `YearAndMonth` with the given year and month.
+    /// # Examples
+    /// ```
+    /// extern crate invoice_typst_logic;
+    /// use invoice_typst_logic::prelude::*;
+    /// let december = YearAndMonth::december(2025);
+    /// assert_eq!(*december.month(), Month::December);
+    /// ```
     pub const fn december(year: u16) -> Self {
         Self::new(Year::new(year), Month::December)
     }
 }
 
-impl YearAndMonth {
-    pub fn sample() -> Self {
+impl HasSample for YearAndMonth {
+    fn sample() -> Self {
         Self::may(2025)
     }
 }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::prelude::*;
 
 /// Response has format:
-/// ```no_run
+/// ```json
 /// {
 ///   "amount": 1.0,
 ///   "base": "GBP",

@@ -14,14 +14,14 @@ pub struct TimestampedInvoiceNumber {
     month: YearAndMonth,
 }
 
-impl TimestampedInvoiceNumber {
-    pub fn sample() -> Self {
+impl HasSample for TimestampedInvoiceNumber {
+    fn sample() -> Self {
         Self::builder()
             .offset(InvoiceNumber::from(237u16))
             .month(
                 YearAndMonth::builder()
                     .year(2017)
-                    .month(Month::try_from(3).expect("LEQ 12"))
+                    .month(Month::March)
                     .build(),
             )
             .build()

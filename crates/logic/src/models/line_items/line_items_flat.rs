@@ -19,6 +19,9 @@ impl MaybeIsExpenses for LineItemsFlat {
 
 impl TryFrom<(LineItemsPricedInSourceCurrency, ExchangeRates)> for LineItemsFlat {
     type Error = crate::prelude::Error;
+
+    /// Converts the line items priced in source currency into a flat list of items
+    /// priced in the target currency, using the provided exchange rates.
     fn try_from(
         (line_items, exchange_rates): (LineItemsPricedInSourceCurrency, ExchangeRates),
     ) -> Result<Self> {
@@ -46,5 +49,14 @@ impl TryFrom<(LineItemsPricedInSourceCurrency, ExchangeRates)> for LineItemsFlat
                 Ok(flat)
             }
         }
+    }
+}
+
+impl HasSample for LineItemsFlat {
+    fn sample() -> Self {
+        Self::builder()
+            .is_expenses(false)
+            .items(vec![ItemConvertedIntoTargetCurrency::sample()])
+            .build()
     }
 }
