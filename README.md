@@ -1,4 +1,6 @@
-# Installation
+# Usage
+
+Before you can use this software you need to install one font and modify a couple of config files with your companies information
 
 ## Font
 
@@ -7,7 +9,11 @@ brew tap homebrew/cask-fonts
 brew install --cask font-computer-modern
 ```
 
-# Run
+
+## Config
+
+
+## Run
 
 Clone and run:
 
@@ -44,8 +50,6 @@ cargo run --bin invoice -- ooo 5
 ```
 
 ## Invoice for expenses
-
-
 
 ```sh
 cargo run --bin invoice -- expenses "Coffee,4.25,GBP,2,2025-05-23" "Sandwich,8.75,EUR,1,2025-05-29"
