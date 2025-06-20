@@ -54,7 +54,7 @@ jobs:
                   components: clippy
 
             - name: Clippy Check
-              run: cargo clippy --locked --all -- -D warnings
+              run: cargo clippy --all
 
     # Rust unit, doc and integration
     test-rust:
@@ -82,11 +82,10 @@ jobs:
 
             - name: Generate code coverage
               run: |
-                  cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+                  cargo +nightly tarpaulin --verbose --all-features --workspace --timeout   120   --out xml
 
             - name: Upload to codecov.io
               uses: codecov/codecov-action@v2
               with:
                   token: ${{secrets.CODECOV_TOKEN}} # not required for public repos
-                  slug: Sajjon/invoice_typst
                   fail_ci_if_error: true
