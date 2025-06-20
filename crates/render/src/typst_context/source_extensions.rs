@@ -37,3 +37,40 @@ impl LoadSource for Source {
         Ok(Source::new(file_id, source_text))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_log::test;
+
+    #[test]
+    fn test_inline_source() {
+        let source_text = "This is a test inline source.".to_string();
+        let virtual_path = "/inline.typ";
+        let source = Source::inline(source_text, virtual_path).unwrap();
+        assert_eq!(
+            source.id().vpath().as_rooted_path().display().to_string(),
+            virtual_path
+        );
+        assert_eq!(source.text(), "This is a test inline source.");
+    }
+
+    #[test]
+    fn test_load_source_at() {
+        let temp_file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(temp_file.path(), "This is a test source.").unwrap();
+        let source = Source::load_source_at(temp_file.path()).unwrap();
+        assert_eq!(
+            source.id().vpath().as_rooted_path().display().to_string(),
+            temp_file.path().display().to_string()
+        );
+        assert_eq!(source.text(), "This is a test source.");
+    }
+
+    #[test]
+    fn test_load_source_at_invalid_path() {
+        let invalid_path = PathBuf::from("non_existent_file.typ");
+        let result = Source::load_source_at(invalid_path);
+        assert!(result.is_err());
+    }
+}

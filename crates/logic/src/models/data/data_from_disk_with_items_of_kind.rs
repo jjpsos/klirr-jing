@@ -148,15 +148,11 @@ impl DataWithItemsPricedInSourceCurrency {
     /// extern crate invoice_typst_logic;
     /// use invoice_typst_logic::prelude::*;
     /// let data = DataWithItemsPricedInSourceCurrency::sample();
-    /// let exchange_rates_map = ExchangeRatesMap::from_iter([(Currency::GBP, UnitPrice::from(10.0)), (Currency::EUR, UnitPrice::from(8.0))]);
-    /// let result = data.to_typst(exchange_rates_map);
+    /// let exchange_rates = ExchangeRates::builder().rates(HashMap::from_iter([(Currency::GBP, UnitPrice::from(10.0)), (Currency::EUR, UnitPrice::from(8.0))])).target_currency(Currency::EUR).build();
+    /// let result = data.to_typst(exchange_rates);
     /// assert!(result.is_ok(), "Expected conversion to succeed, got: {:?}", result);
     /// ```
-    pub fn to_typst(self, exchange_rates_map: ExchangeRatesMap) -> Result<DataTypstCompat> {
-        let exchange_rates = ExchangeRates::builder()
-            .rates(exchange_rates_map)
-            .target_currency(*self.payment_info().currency())
-            .build();
+    pub fn to_typst(self, exchange_rates: ExchangeRates) -> Result<DataTypstCompat> {
         let line_items = LineItemsFlat::try_from((self.line_items, exchange_rates))?;
         Ok(DataTypstCompat {
             line_items,

@@ -80,10 +80,15 @@ mod tests {
             let input = $sample
                 .to_partial($input)
                 .unwrap()
-                .to_typst(ExchangeRatesMap::from_iter([
-                    (Currency::GBP, UnitPrice::from(1.174)),
-                    (Currency::SEK, UnitPrice::from(11.05)),
-                ]))
+                .to_typst(
+                    ExchangeRates::builder()
+                        .target_currency(Currency::EUR)
+                        .rates(ExchangeRatesMap::from_iter([
+                            (Currency::GBP, UnitPrice::from(1.174)),
+                            (Currency::SEK, UnitPrice::from(11.05)),
+                        ]))
+                        .build(),
+                )
                 .unwrap();
             let typst = to_typst_let(&input);
             pretty_assertions::assert_eq!(typst, $expected);

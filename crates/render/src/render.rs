@@ -11,16 +11,15 @@ pub fn render(layout_path: impl AsRef<Path>, l18n: L18n, data: DataTypstCompat) 
     let data_count = data_typst_str.len();
 
     debug!("☑️ Creating typst 'World' (environment/context), this usually takes ~2 seconds.");
-    let world = TypstContext::with_path(layout_path.as_ref(), l18n_typst_str, data_typst_str)?;
+    let context = TypstContext::with_path(layout_path.as_ref(), l18n_typst_str, data_typst_str)?;
     debug!("✅ Created typst 'World' (environment/context)");
 
-    // Compile the Typst source into a PagedDocument (layouted pages).
     debug!(
         "☑️ Compiling typst source at: {:?} with data: #{} bytes",
         layout_path.as_ref(),
         data_count
     );
-    let compile_result = typst::compile::<PagedDocument>(&world);
+    let compile_result = typst::compile::<PagedDocument>(&context);
     let doc = compile_result.output.map_err(|e| {
         let msg = format!("Failed to compile Typst source, because: {:?}", e);
         error!("{}", msg);
@@ -83,14 +82,10 @@ pub fn fixture(relative: impl AsRef<Path>) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Once;
-
-    use magick_rust::{LayerMethod, MagickWand, magick_wand_genesis};
-
     use super::*;
+    use magick_rust::{LayerMethod, MagickWand, magick_wand_genesis};
+    use std::{env, sync::Once};
     use test_log::test;
-
-    use std::env;
 
     fn running_in_ci() -> bool {
         env::var("CI").is_ok()
@@ -197,7 +192,8 @@ mod tests {
         sample: DataFromDisk,
         input: ValidInput,
     ) -> Vec<u8> {
-        let data = prepare_invoice_input_data(sample, input).unwrap();
+        let data =
+            prepare_invoice_input_data(sample, input, Some(ExchangeRates::hard_coded())).unwrap();
         let pdf = render(layout_path, l18n, data).unwrap();
         convert_pdf_to_pngs(pdf.as_ref(), 85.0).expect("Should be able to convert")
     }

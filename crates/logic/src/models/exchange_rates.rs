@@ -55,3 +55,18 @@ impl ExchangeRates {
         Ok(UnitPrice::from(*unit_price * **rate))
     }
 }
+
+impl ExchangeRates {
+    pub fn hard_coded() -> Self {
+        let rates = HashMap::from([
+            (Currency::EUR, UnitPrice::from(1.0)),
+            (Currency::USD, UnitPrice::from(1.2)),
+            (Currency::GBP, UnitPrice::from(0.85)),
+            (Currency::SEK, UnitPrice::from(11.0)),
+        ]);
+        Self {
+            target_currency: Currency::EUR,
+            rates,
+        }
+    }
+}

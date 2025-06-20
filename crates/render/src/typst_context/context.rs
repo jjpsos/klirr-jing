@@ -85,11 +85,14 @@ impl World for TypstContext {
     }
 
     fn font(&self, index: usize) -> Option<Font> {
-        if let Some(font) = self.environment().fonts().get(index)?.get() {
-            trace!("Using font @{} => {:?}", index, font.info().family);
+        let Some(font_slot) = self.environment().fonts().get(index) else {
+            panic!("Font Slot not found at index: {}", index);
+        };
+
+        if let Some(font) = font_slot.get() {
             Some(font)
         } else {
-            panic!("Font not found")
+            panic!("Font not found at index: {}", index);
         }
     }
 
@@ -109,5 +112,41 @@ impl World for TypstContext {
             with_offset.month().try_into().ok()?,
             with_offset.day().try_into().ok()?,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_log::test;
+    use typst::syntax::VirtualPath;
+
+    fn sut() -> TypstContext {
+        TypstContext::new(
+            Source::detached("layout"),
+            Source::detached("l18n"),
+            Source::detached("data"),
+        )
+    }
+
+    #[test]
+    fn today() {
+        let sut = sut();
+        let today = sut.today(None);
+        assert!(today.is_some())
+    }
+
+    #[test]
+    #[should_panic]
+    fn unknown_font_panics() {
+        let sut = sut();
+        let _ = sut.font(9999999999);
+    }
+
+    #[test]
+    #[should_panic]
+    fn unknown_typst_resource_panics() {
+        let sut = sut();
+        let _ = sut.source(FileId::new_fake(VirtualPath::new(Path::new("unknown.typ"))));
     }
 }

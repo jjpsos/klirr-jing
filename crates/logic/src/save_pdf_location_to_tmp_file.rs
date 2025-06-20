@@ -42,7 +42,7 @@ mod tests {
     use test_log::test;
 
     #[test]
-    fn test_save_pdf_location_to_tmp_file() {
+    fn test_get_tmp_file_for_path_to_pdf() {
         let tmp_file = NamedTempFile::new().unwrap();
         let tmp_file = tmp_file.path();
         unsafe {
@@ -50,5 +50,22 @@ mod tests {
         }
         let path = get_tmp_file_for_path_to_pdf();
         assert_eq!(path.unwrap(), PathBuf::from(tmp_file));
+    }
+
+    #[test]
+    fn test_save_pdf_location_to_tmp_file() {
+        let tmp_file = NamedTempFile::new().unwrap();
+        let tmp_file_path = tmp_file.path().to_path_buf();
+        unsafe {
+            std::env::set_var(
+                "TMP_FILE_FOR_PATH_TO_PDF",
+                tmp_file_path.display().to_string(),
+            );
+        }
+        let pdf_location = PathBuf::from("test.pdf");
+        let result = save_pdf_location_to_tmp_file(pdf_location.clone());
+        assert!(result.is_ok());
+        let content = std::fs::read_to_string(tmp_file_path).unwrap();
+        assert_eq!(content, pdf_location.to_string_lossy());
     }
 }
