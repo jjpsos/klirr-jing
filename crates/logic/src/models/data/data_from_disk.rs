@@ -127,10 +127,7 @@ impl DataFromDisk {
                         LineItemsPricedInSourceCurrency::Service(service)
                     }
                     InvoicedItems::Expenses => {
-                        let expenses = get_expenses_for_month(
-                            target_month,
-                            self.expensed_months.expenses_for_months(),
-                        )?;
+                        let expenses = self.expensed_months.get(target_month)?;
                         LineItemsPricedInSourceCurrency::Expenses(expenses.clone())
                     }
                 })
@@ -173,5 +170,29 @@ mod tests {
     #[test]
     fn test_serialization_sample() {
         assert_ron_snapshot!(DataFromDisk::sample())
+    }
+
+    #[test]
+    fn test_worked_days_when_ooo_is_greater_than_0() {
+        let sut = DataFromDisk::sample();
+        let partial = sut
+            .to_partial(
+                ValidInput::builder()
+                    .items(InvoicedItems::Service {
+                        days_off: Some(Day::try_from(2).unwrap()),
+                    })
+                    .month(YearAndMonth::sample())
+                    .build(),
+            )
+            .unwrap();
+        assert_eq!(
+            partial
+                .line_items()
+                .clone()
+                .try_unwrap_service()
+                .unwrap()
+                .quantity(),
+            &Quantity::from(20.0)
+        );
     }
 }

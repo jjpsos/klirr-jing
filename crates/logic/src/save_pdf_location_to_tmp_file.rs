@@ -14,23 +14,19 @@ fn get_tmp_file_for_path_to_pdf() -> Option<PathBuf> {
 /// Saves the path to the PDF file to a temporary file, if the environment variable
 /// `TMP_FILE_FOR_PATH_TO_PDF` is set.
 pub fn save_pdf_location_to_tmp_file(pdf_location: PathBuf) -> Result<()> {
-    let Some(path_to_tmp_file_where_we_write_dir_of_pdf) = get_tmp_file_for_path_to_pdf() else {
+    save_pdf_location_to_tmp_file_target(pdf_location, get_tmp_file_for_path_to_pdf())
+}
+fn save_pdf_location_to_tmp_file_target(
+    pdf_location: PathBuf,
+    target: Option<PathBuf>,
+) -> Result<()> {
+    let Some(target) = target else {
         return Ok(());
     };
-
-    trace!(
-        "Saving path to PDF to temp file '{}'",
-        path_to_tmp_file_where_we_write_dir_of_pdf.display()
-    );
-    if let Err(e) = std::fs::write(
-        &path_to_tmp_file_where_we_write_dir_of_pdf,
-        pdf_location.to_string_lossy().as_bytes(),
-    ) {
-        error!(
-            "⚠️ Failed to write output path to {}: {} (scripts e.g. makefile will not be able to open the PDF automatically)",
-            path_to_tmp_file_where_we_write_dir_of_pdf.display(),
-            e
-        );
+    let path = target.display().to_string();
+    trace!("Saving path to PDF to temp file '{}'", path);
+    if let Err(e) = std::fs::write(&target, pdf_location.to_string_lossy().as_bytes()) {
+        warn!("⚠️ Write to {path}: {e} (scripts won't find PDF.)",);
     };
     Ok(())
 }
@@ -43,18 +39,28 @@ mod tests {
 
     #[test]
     fn test_save_pdf_location_to_tmp_file() {
-        let tmp_file = NamedTempFile::new().unwrap();
-        let tmp_file_path = tmp_file.path().to_path_buf();
-        unsafe {
-            std::env::set_var(
-                "TMP_FILE_FOR_PATH_TO_PDF",
-                tmp_file_path.display().to_string(),
-            );
+        {
+            // Without env set
+            let pdf_location = PathBuf::from("test.pdf");
+            let result =
+                save_pdf_location_to_tmp_file_target(pdf_location.clone(), Some(PathBuf::new()));
+            assert!(result.is_ok());
         }
-        let pdf_location = PathBuf::from("test.pdf");
-        let result = save_pdf_location_to_tmp_file(pdf_location.clone());
-        assert!(result.is_ok());
-        let content = std::fs::read_to_string(tmp_file_path).unwrap();
-        assert_eq!(content, pdf_location.to_string_lossy());
+        {
+            // With env set
+            let tmp_file = NamedTempFile::new().unwrap();
+            let tmp_file_path = tmp_file.path().to_path_buf();
+            unsafe {
+                std::env::set_var(
+                    "TMP_FILE_FOR_PATH_TO_PDF",
+                    tmp_file_path.display().to_string(),
+                );
+            }
+            let pdf_location = PathBuf::from("test.pdf");
+            let result = save_pdf_location_to_tmp_file(pdf_location.clone());
+            assert!(result.is_ok());
+            let content = std::fs::read_to_string(tmp_file_path).unwrap();
+            assert_eq!(content, pdf_location.to_string_lossy());
+        }
     }
 }
