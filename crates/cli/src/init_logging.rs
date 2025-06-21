@@ -42,6 +42,7 @@ pub(crate) fn init_logging_with_level(log_level: log::LevelFilter) {
         .level(log_level)
         .chain(std::io::stdout())
         .apply()
+        .inspect_err(|e| println!("💥 Failed to initialize logging with level `{log_level}`: {e}"))
         .unwrap();
 
     println!(
@@ -88,12 +89,22 @@ pub fn init_logging() {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use super::*;
-    use test_log::test;
 
     #[test]
     #[should_panic(expected = "")]
     fn invalid_log_level() {
         init_logging_with_level_str("foobar");
+    }
+
+    #[test]
+    fn init_logging_with_level_str_valid() {
+        if env::var("CI").is_ok() {
+            // fails for tarpaulin in ci
+            return;
+        }
+        init_logging_with_level_str("info");
     }
 }

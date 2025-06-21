@@ -57,29 +57,9 @@ impl std::str::FromStr for Date {
             });
         }
 
-        let year = Year::from(
-            parts[0]
-                .parse::<i32>()
-                .map_err(|_| Error::FailedToParseDate {
-                    underlying: "Invalid year".to_owned(),
-                })?,
-        );
-        let month =
-            Month::try_from(
-                parts[1]
-                    .parse::<i32>()
-                    .map_err(|_| Error::FailedToParseDate {
-                        underlying: "Invalid month".to_owned(),
-                    })?,
-            )?;
-        let day =
-            Day::try_from(
-                parts[2]
-                    .parse::<i32>()
-                    .map_err(|_| Error::FailedToParseDate {
-                        underlying: "Invalid day".to_owned(),
-                    })?,
-            )?;
+        let year = Year::from_str(parts[0])?;
+        let month = Month::from_str(parts[1])?;
+        let day = Day::from_str(parts[2])?;
 
         Ok(Self::builder().year(year).month(month).day(day).build())
     }
@@ -155,6 +135,25 @@ mod tests {
         let sut = YearAndMonth::from_str("2025-05").unwrap();
         assert_eq!(sut.year(), &Year::from(2025));
         assert_eq!(sut.month(), &Month::May);
+    }
+
+    #[test]
+    fn test_from_str_all_reasons_invalid() {
+        let invalid_dates = [
+            "2025-05-32",        // Invalid day
+            "99999999999-05-32", // Invalid year
+            "2025-13-01",        // Invalid month
+            "2025-00-01",        // Invalid month zero
+            "2025-13-01",        // Invalid month too large
+            "2025-05",           // Missing day
+            "2025",              // Missing month and day
+            "05-23",             // Missing year
+            "2025-05-23-01",     // Too many parts
+        ];
+
+        for date in invalid_dates {
+            assert!(Date::from_str(date).is_err());
+        }
     }
 
     #[test]

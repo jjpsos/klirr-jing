@@ -25,6 +25,10 @@ pub enum Error {
     )]
     TargetMonthMustHaveExpenses { target_month: YearAndMonth },
 
+    /// Failed to parse year
+    #[error("Failed to parse year: {invalid_string}")]
+    FailedToParseYear { invalid_string: String },
+
     /// Failed to load file
     #[error("Failed to load file: {path}")]
     FileNotFound { path: String },
@@ -32,6 +36,13 @@ pub enum Error {
     /// Failed to deserialize a type
     #[error("Failed to deserialize {type_name}, because: {error}")]
     Deserialize { type_name: String, error: String },
+
+    /// Failed to parse Day from String
+    #[error("Invalid day from String: {invalid_string}, reason: {reason}")]
+    InvalidDayFromString {
+        invalid_string: String,
+        reason: String,
+    },
 
     /// Invalid day of the month, e.g. when the day is not between 1 and 31.
     #[error("Invalid day: {day}, reason: {reason}")]
