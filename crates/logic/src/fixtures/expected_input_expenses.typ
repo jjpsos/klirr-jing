@@ -22,7 +22,6 @@
     invoice_date: "2025-05-31",
     number: 334,
     purchase_order: "PO-12345",
-    terms: "Net 30",
   ),
   line_items: (
     is_expenses: true,
@@ -61,6 +60,7 @@
     bic: "ESSESESS",
     currency: "EUR",
     iban: "SE21 9000 0123 9876 5432 1009",
+    terms: "Net 30",
   ),
   vendor: (
     company_name: "Bra Detektiv AB",

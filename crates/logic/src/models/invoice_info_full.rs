@@ -1,5 +1,8 @@
 use crate::prelude::*;
 
+/// A full invoice information structure that includes the derived
+/// invoice number, invoice date, due date and other
+/// details from the `ProtoInvoiceInfo`.
 #[derive(Clone, Debug, Serialize, Deserialize, Getters, TypedBuilder)]
 pub struct InvoiceInfoFull {
     /// The unique number of this invoice, typically a number, e.g. `"90"`
@@ -24,11 +27,6 @@ pub struct InvoiceInfoFull {
     #[getset(get = "pub")]
     purchase_order: PurchaseOrder,
 
-    /// The payment terms of this invoice, e.g. `Net { due_in: 30 }`
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    terms: PaymentTerms,
-
     /// E.g. "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation."
     #[builder(setter(into))]
     #[getset(get = "pub")]
@@ -47,7 +45,6 @@ impl InvoiceInfoFull {
             .invoice_date(Date::sample())
             .due_date(Date::sample())
             .purchase_order(PurchaseOrder::sample())
-            .terms(PaymentTerms::sample())
             .footer_text(
                 "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation."
                     .to_string(),

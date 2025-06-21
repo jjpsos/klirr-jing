@@ -26,12 +26,12 @@ pub struct DataFromDisk {
     #[getset(get = "pub")]
     payment_info: PaymentInformation,
 
-    /// Price of consulting service, if applicable.
+    /// Price of service, if applicable.
     #[builder(setter(into))]
     #[getset(get = "pub")]
-    services_price: ConsultingService,
+    service_fees: ServiceFees,
 
-    /// Price of consulting service, if applicable.
+    /// Any expenses that you might have incurred.
     #[builder(setter(into))]
     #[getset(get = "pub")]
     expensed_months: ExpensedMonths,
@@ -78,7 +78,7 @@ impl DataFromDisk {
         let items = input.items();
         let target_month = input.month();
         let invoice_date = target_month.to_date_end_of_month();
-        let due_date = invoice_date.advance(self.information().terms());
+        let due_date = invoice_date.advance(self.payment_info().terms());
         let is_expenses = items.is_expenses();
         let number = input.invoice_number(self.information());
 
@@ -104,7 +104,6 @@ impl DataFromDisk {
             .footer_text(self.information().footer_text())
             .number(number)
             .purchase_order(self.information().purchase_order().clone())
-            .terms(self.information().terms().clone())
             .build();
 
         let input_unpriced =
@@ -119,10 +118,10 @@ impl DataFromDisk {
                         )?;
                         let worked_days = working_days - days_off.map(|d| *d).unwrap_or(0);
                         let service = Item::builder()
-                            .name(self.services_price.name().clone())
+                            .name(self.service_fees.name().clone())
                             .transaction_date(invoice_date)
                             .quantity(Quantity::from(worked_days as f64))
-                            .unit_price(*self.services_price.unit_price())
+                            .unit_price(*self.service_fees.unit_price())
                             .currency(*self.payment_info.currency())
                             .build();
                         LineItemsPricedInSourceCurrency::Service(service)
@@ -151,7 +150,7 @@ impl HasSample for DataFromDisk {
             .client(CompanyInformation::sample_client())
             .vendor(CompanyInformation::sample_vendor())
             .payment_info(PaymentInformation::sample())
-            .services_price(ConsultingService::sample())
+            .service_fees(ServiceFees::sample())
             .expensed_months(ExpensedMonths::new(IndexMap::from_iter([(
                 YearAndMonth::sample(),
                 vec![

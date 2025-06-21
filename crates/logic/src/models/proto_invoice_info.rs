@@ -1,16 +1,8 @@
 use crate::prelude::*;
 
-/// Information about this invoice, such as the number, date, purchase order,
-/// and payment terms.
+/// Partial information about the invoice which can be used to derive a [`InvoiceInfoFull`]
 #[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
 pub struct ProtoInvoiceInfo {
-    /// A purchase order number associated with this invoice, e.g. `"PO-12345"`
-    /// Typically agreed upon between the vendor and client before the
-    /// invoice is issued.
-    #[builder(setter(into))]
-    #[getset(get = "pub")]
-    purchase_order: PurchaseOrder,
-
     /// An offset which is used to calculate the invoice number, e.g. `(237, 2025-05)`.
     /// This is enables us to calculate the next invoice number based on the current
     /// date and this offset.
@@ -23,10 +15,12 @@ pub struct ProtoInvoiceInfo {
     #[getset(get = "pub")]
     months_off_record: MonthsOffRecord,
 
-    /// The payment terms of this invoice, e.g. `Net { due_in: 30 }`
-    #[builder(setter(into), default)]
+    /// A purchase order number associated with this invoice, e.g. `"PO-12345"`
+    /// Typically agreed upon between the vendor and client before the
+    /// invoice is issued.
+    #[builder(setter(into))]
     #[getset(get = "pub")]
-    terms: PaymentTerms,
+    purchase_order: PurchaseOrder,
 
     /// E.g. "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation."
     #[builder(setter(into), default = String::new())]
@@ -43,7 +37,6 @@ impl HasSample for ProtoInvoiceInfo {
     fn sample() -> Self {
         Self::builder()
             .purchase_order(PurchaseOrder::sample())
-            .terms(PaymentTerms::sample())
             .footer_text(
                 "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
             )

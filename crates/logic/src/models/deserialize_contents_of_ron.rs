@@ -105,14 +105,14 @@ mod tests {
         fs::write(
             path,
             r#"
-            ConsultingService(
+            ServiceFees(
                 name: "Agreed Consulting Service",
             	unit_price: UnitPrice(350.0)
             )"#,
         )
         .unwrap();
 
-        let result: Result<ConsultingService> = deserialize_contents_of_ron(path);
+        let result: Result<ServiceFees> = deserialize_contents_of_ron(path);
         assert!(result.is_ok(), "Expected success, got: {:?}", result);
         let consulting_service = result.unwrap();
         assert_eq!(consulting_service.name(), "Agreed Consulting Service");

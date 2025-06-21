@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Getters, TypedBuilder)]
-pub struct ConsultingService {
+pub struct ServiceFees {
     /// Description of the consulting service, e.g. `"App development"`
     #[builder(setter(into))]
     #[getset(get = "pub")]
@@ -11,7 +11,8 @@ pub struct ConsultingService {
     #[getset(get = "pub")]
     unit_price: UnitPrice,
 }
-impl ConsultingService {
+
+impl ServiceFees {
     pub fn sample() -> Self {
         Self::builder()
             .name("App development".to_string())

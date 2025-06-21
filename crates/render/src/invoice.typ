@@ -206,7 +206,7 @@
         #data.client.contact_person
       ]) \
       #strong[#l18n.invoice_info.vendor_contact] #data.vendor.contact_person \
-      #strong[#l18n.invoice_info.terms] #data.information.terms
+      #strong[#l18n.invoice_info.terms] #data.payment_info.terms
     ],
   )
 )

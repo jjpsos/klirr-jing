@@ -3,4 +3,5 @@ PaymentInformation(
 	bic: "ESSESESS",
 	currency: "EUR",
 	iban: "SE21 9000 0123 9876 5432 1009",
+	terms: "Net 30",
 )

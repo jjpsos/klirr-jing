@@ -18,9 +18,9 @@ fn payment_info() -> Result<PaymentInformation> {
     ))
 }
 
-fn services_price() -> Result<ConsultingService> {
+fn service_fees() -> Result<ServiceFees> {
     deserialize_contents_of_ron(directory_relative_workspace_with_path_components(
-        "./input/data/consulting_service.ron",
+        "./input/data/service_fees.ron",
     ))
 }
 
@@ -43,14 +43,14 @@ pub fn read_data_from_disk() -> Result<DataFromDisk> {
     let client = client()?;
     let vendor = vendor()?;
     let payment_info = payment_info()?;
-    let service_prices = services_price()?;
+    let service_prices = service_fees()?;
     let proto_invoice_info = proto_invoice_info()?;
     let expensed_months = expensed_months()?;
     let input_data = DataFromDisk::builder()
         .client(client)
         .vendor(vendor)
         .payment_info(payment_info)
-        .services_price(service_prices)
+        .service_fees(service_prices)
         .information(proto_invoice_info)
         .expensed_months(expensed_months)
         .build();

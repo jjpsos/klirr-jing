@@ -4,7 +4,6 @@ expression: "DataFromDisk::sample()"
 ---
 DataFromDisk(
   information: ProtoInvoiceInfo(
-    purchase_order: "PO-12345",
     offset: TimestampedInvoiceNumber(
       offset: 237,
       month: "2017-03",
@@ -13,7 +12,7 @@ DataFromDisk(
       "2020-12",
       "2021-03",
     ]),
-    terms: "Net 30",
+    purchase_order: "PO-12345",
     footer_text: "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
     emphasize_color_hex: "#e6007a",
   ),
@@ -52,8 +51,9 @@ DataFromDisk(
     bank_name: "SEB",
     bic: "ESSESESS",
     currency: "EUR",
+    terms: "Net 30",
   ),
-  services_price: ConsultingService(
+  service_fees: ServiceFees(
     name: "App development",
     unit_price: UnitPrice(350.0),
   ),

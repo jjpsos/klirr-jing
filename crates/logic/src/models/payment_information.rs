@@ -24,6 +24,11 @@ pub struct PaymentInformation {
     #[builder(setter(into))]
     #[getset(get = "pub")]
     currency: Currency,
+
+    /// The payment terms of this invoice, e.g. `Net { due_in: 30 }`
+    #[builder(setter(into))]
+    #[getset(get = "pub")]
+    terms: PaymentTerms,
 }
 
 impl HasSample for PaymentInformation {
@@ -33,6 +38,7 @@ impl HasSample for PaymentInformation {
             .iban("SE21 9000 0123 9876 5432 1009")
             .bic("ESSESESS")
             .currency(Currency::EUR)
+            .terms(PaymentTerms::sample())
             .build()
     }
 }

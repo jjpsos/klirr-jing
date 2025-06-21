@@ -8,7 +8,6 @@ ProtoInvoiceInfo(
 	    "2020-09",
 	    "2021-03",
 	]),
-	terms: "Net 30",
 	footer_text: "Reverse VAT according to chapter 1 2§ first section 4b in the VAT regulation.",
 	emphasize_color_hex: "#e6007a",
   )
