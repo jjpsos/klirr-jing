@@ -136,18 +136,34 @@ mod tests {
     use test_log::test;
 
     #[test]
+    fn test_get_absolute_path_with_name() {
+        let data = DataWithItemsPricedInSourceCurrency::builder()
+            .output_path(OutputPath::Name("invoice.pdf".to_owned()))
+            .information(InvoiceInfoFull::sample())
+            .vendor(CompanyInformation::sample())
+            .client(CompanyInformation::sample())
+            .payment_info(PaymentInformation::sample())
+            .line_items(LineItemsPricedInSourceCurrency::sample())
+            .build();
+        assert!(
+            data.absolute_path()
+                .unwrap()
+                .ends_with("invoices/invoice.pdf")
+        );
+    }
+
+    #[test]
     fn test_get_absolute_path_with_absolute_path() {
-        let data = read_data_from_disk().unwrap();
-        let path_buf = PathBuf::from("/absolute/path/to/invoice.pdf");
-        let data = data
-            .to_partial(
-                ValidInput::builder()
-                    .maybe_output_path(path_buf.clone())
-                    .month(YearAndMonth::sample())
-                    .build(),
-            )
-            .unwrap();
-        assert_eq!(data.absolute_path().unwrap(), path_buf);
+        let custom_path = PathBuf::from("custom/invoice.pdf");
+        let data = DataWithItemsPricedInSourceCurrency::builder()
+            .output_path(OutputPath::AbsolutePath(custom_path.clone()))
+            .information(InvoiceInfoFull::sample())
+            .vendor(CompanyInformation::sample())
+            .client(CompanyInformation::sample())
+            .payment_info(PaymentInformation::sample())
+            .line_items(LineItemsPricedInSourceCurrency::sample())
+            .build();
+        assert_eq!(data.absolute_path().unwrap(), custom_path);
     }
 
     #[test]

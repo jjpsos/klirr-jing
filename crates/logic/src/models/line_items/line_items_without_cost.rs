@@ -36,6 +36,8 @@ mod tests {
 
     #[test]
     fn is_expenses() {
-        assert!(!LineItemsPricedInSourceCurrency::sample().is_expenses());
+        assert!(!MaybeIsExpenses::is_expenses(
+            &LineItemsPricedInSourceCurrency::sample()
+        ));
     }
 }

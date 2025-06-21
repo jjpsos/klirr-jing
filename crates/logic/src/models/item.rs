@@ -187,6 +187,12 @@ impl FromStr for Item {
                 reason: format!("Failed to parse quantity: {e}"),
             })?
             .into();
+        if quantity < Quantity::ZERO {
+            return Err(Error::InvalidExpenseItem {
+                invalid_string: s.to_string(),
+                reason: "Quantity cannot be negative".to_string(),
+            });
+        }
 
         let transaction_date = Date::from_str(parts[4]).map_err(|e| Error::InvalidExpenseItem {
             invalid_string: s.to_string(),
@@ -221,5 +227,27 @@ mod tests {
             sut.transaction_date(),
             &Date::from_str("2025-05-31").unwrap()
         );
+    }
+
+    #[test]
+    fn inequal() {
+        let item1 = Item::sample_expense_coffee();
+        let item2 = Item::sample_expense_sandwich();
+        assert_ne!(item1, item2);
+    }
+
+    #[test]
+    fn from_str_invalid() {
+        let invalid_strings = [
+            "Coffee,2.5, EUR,3.0",                          // Missing transaction_date
+            "Coffee,2.5, EUR,3.0, 2025-05-31, extra",       // Too many parts
+            "Coffee,invalid_price, EUR,3.0, 2025-05-31",    // Invalid unit_price
+            "Coffee,2.5, invalid_currency,3.0, 2025-05-31", // Invalid currency
+            "Coffee,2.5, EUR,-3.0, 2025-05-31",             // Negative quantity
+        ];
+
+        for &s in &invalid_strings {
+            assert!(Item::from_str(s).is_err(), "Expected error for: {}", s);
+        }
     }
 }

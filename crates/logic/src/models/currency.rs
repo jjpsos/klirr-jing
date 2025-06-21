@@ -245,4 +245,41 @@ mod tests {
         assert_debug_snapshot!(Currency::XRD, @"XRD");
         assert_debug_snapshot!(Currency::DOT, @"DOT");
     }
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(Currency::from_str("USD").unwrap(), Currency::USD);
+        assert_eq!(Currency::from_str("EUR").unwrap(), Currency::EUR);
+        assert_eq!(Currency::from_str("GBP").unwrap(), Currency::GBP);
+        assert_eq!(Currency::from_str("JPY").unwrap(), Currency::JPY);
+        assert_eq!(Currency::from_str("CAD").unwrap(), Currency::CAD);
+        assert_eq!(Currency::from_str("AUD").unwrap(), Currency::AUD);
+        assert_eq!(Currency::from_str("CHF").unwrap(), Currency::CHF);
+        assert_eq!(Currency::from_str("SEK").unwrap(), Currency::SEK);
+        assert_eq!(Currency::from_str("NOK").unwrap(), Currency::NOK);
+        assert_eq!(Currency::from_str("DKK").unwrap(), Currency::DKK);
+        assert_eq!(Currency::from_str("CNY").unwrap(), Currency::CNY);
+        assert_eq!(Currency::from_str("INR").unwrap(), Currency::INR);
+        assert_eq!(Currency::from_str("BRL").unwrap(), Currency::BRL);
+        assert_eq!(Currency::from_str("RUB").unwrap(), Currency::RUB);
+        assert_eq!(Currency::from_str("ZAR").unwrap(), Currency::ZAR);
+        assert_eq!(Currency::from_str("MXN").unwrap(), Currency::MXN);
+        assert_eq!(Currency::from_str("NZD").unwrap(), Currency::NZD);
+        assert_eq!(Currency::from_str("SGD").unwrap(), Currency::SGD);
+        assert_eq!(Currency::from_str("HKD").unwrap(), Currency::HKD);
+        assert_eq!(Currency::from_str("KRW").unwrap(), Currency::KRW);
+        assert_eq!(Currency::from_str("SAR").unwrap(), Currency::SAR);
+        assert_eq!(Currency::from_str("AED").unwrap(), Currency::AED);
+        assert_eq!(Currency::from_str("TRY").unwrap(), Currency::TRY);
+        assert_eq!(Currency::from_str("PLN").unwrap(), Currency::PLN);
+        assert_eq!(Currency::from_str("THB").unwrap(), Currency::THB);
+        assert_eq!(Currency::from_str("TWD").unwrap(), Currency::TWD);
+        assert_eq!(Currency::from_str("XAF").unwrap(), Currency::XAF);
+        assert_eq!(Currency::from_str("XOF").unwrap(), Currency::XOF);
+        assert_eq!(Currency::from_str("XCD").unwrap(), Currency::XCD);
+        assert_eq!(Currency::from_str("XBT").unwrap(), Currency::XBT);
+        assert_eq!(Currency::from_str("ETH").unwrap(), Currency::ETH);
+        assert_eq!(Currency::from_str("XRD").unwrap(), Currency::XRD);
+        assert_eq!(Currency::from_str("DOT").unwrap(), Currency::DOT);
+    }
 }

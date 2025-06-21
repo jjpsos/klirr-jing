@@ -83,6 +83,6 @@ mod tests {
 
     #[test]
     fn test_is_expenses() {
-        assert!(!LineItemsFlat::sample().is_expenses());
+        assert!(!MaybeIsExpenses::is_expenses(&LineItemsFlat::sample()));
     }
 }
