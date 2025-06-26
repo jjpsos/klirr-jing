@@ -1,23 +1,28 @@
 [package]
-name = "invoice"
+name = "klirr"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 # Internal dependencies
-invoice-typst-logic.workspace = true
-invoice-typst-render.workspace = true
+klirr-core.workspace = true
+klirr-render.workspace = true
 
 # External dependencies
 chrono.workspace = true
+clap = { version = "4.5.39", features = ["derive"] }
 colored = "3.0.0"
 derive_more.workspace = true
+dirs-next.workspace = true
 fern = "0.7.1"
-clap = { version = "4.5.39", features = ["derive"] }
+inquire = { version = "0.7.5", features = ["date"] }
 log.workspace = true
+ron.workspace = true
 thiserror.workspace = true
 typed-builder.workspace = true
 
 [dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true
 tempfile.workspace = true
 test-log.workspace = true
