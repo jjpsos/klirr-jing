@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{borrow::Borrow, collections::HashMap};
 
 use crate::{logic::prepare_data::fetch_exchange_rate_with_reqwest::get_exchange_rate, prelude::*};
 
@@ -33,12 +33,17 @@ impl DeserializableResponse for reqwest::blocking::Response {
     }
 }
 
+/// Formats a URL for the [Frankfurter API][api] to fetch exchange rates
+///
+/// [api]: https://frankfurter.dev/
 fn format_url(date: Date, from: Currency, to: Currency) -> String {
     format!("{}/{}?from={}&to={}", FRANKFURTER_API, date, from, to)
 }
 
-/// Makes blocking requests to the Frankfurter API to get the exchange rate
-pub(super) fn get_exchange_rate_with_fetcher<T: DeserializableResponse>(
+/// Makes blocking requests to the [Frankfurter API][api] to get the exchange rate
+///  
+/// [api]: https://frankfurter.dev/
+pub(super) fn _get_exchange_rate_with_fetcher<T: DeserializableResponse>(
     date: Date,
     from: Currency,
     to: Currency,
@@ -63,49 +68,179 @@ pub(super) fn get_exchange_rate_with_fetcher<T: DeserializableResponse>(
         })
 }
 
-pub type ExchangeRatesMap = HashMap<Currency, UnitPrice>;
+/// Map from `Currency` to `UnitPrice`
+pub type ExchangeRatesMap = IndexMap<Currency, UnitPrice>;
 
-pub fn get_exchange_rates_if_needed(
-    target_currency: Currency,
-    items: &LineItemsPricedInSourceCurrency,
-) -> Result<ExchangeRates> {
-    get_exchange_rates_if_needed_with_fetcher(target_currency, items, get_exchange_rate)
+/// A fetcher for exchange rates, which caches rates in a local file
+#[derive(TypedBuilder)]
+pub struct ExchangeRatesFetcher<T = ()> {
+    path_to_cache: PathBuf,
+    /// Useful for testing, allows to use a temporary directory for caching
+    #[allow(dead_code)]
+    extra: T,
 }
 
-/// Fetches exchange rates for expenses in the provided line items if needed.
-fn get_exchange_rates_if_needed_with_fetcher(
-    target_currency: Currency,
-    items: &LineItemsPricedInSourceCurrency,
-    get_exchange_rate: impl Fn(Date, Currency, Currency) -> Result<UnitPrice>,
-) -> Result<ExchangeRates> {
-    let Ok(expenses) = items.clone().try_unwrap_expenses() else {
-        debug!("No expenses found, skipping exchange rate fetching.");
-        return Ok(ExchangeRates::builder()
-            .target_currency(target_currency)
-            .rates(HashMap::new())
-            .build());
-    };
-    debug!("☑️ Fetching rates for #{} expenses...", expenses.len());
-    let mut rates = HashMap::new();
-    for expense in expenses {
-        let from = *expense.currency();
-        if let std::collections::hash_map::Entry::Vacant(e) = rates.entry(from) {
-            let date = *expense.transaction_date();
-            let rate = get_exchange_rate(date, from, target_currency)?;
-            e.insert(rate);
+impl Default for ExchangeRatesFetcher {
+    /// Cache exchange rates in the user's data directory.
+    fn default() -> Self {
+        Self {
+            path_to_cache: data_dir(),
+            extra: (),
         }
     }
-    debug!("✅ Fetched exchanges rates for #{} expenses.", rates.len());
-    let rates = ExchangeRates::builder()
-        .target_currency(target_currency)
-        .rates(rates)
-        .build();
-    Ok(rates)
+}
+
+type FromCurrency = Currency;
+type ToCurrency = Currency;
+type ExchangeRate = UnitPrice;
+
+/// If the rates was fetched using network request, this is `true`.
+/// If the rates were loaded from cache, this is `false`.
+type FetchedNew = bool;
+
+/// A cache of exchange rates, indexed by date, from currency, and to currency
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+struct CachedRates(IndexMap<Date, IndexMap<FromCurrency, IndexMap<ToCurrency, ExchangeRate>>>);
+impl CachedRates {
+    /// Returns a mutable reference to the rates for a specific date, creating a new entry if it doesn't exist.
+    fn _rates_for_day(
+        &mut self,
+        date: impl Borrow<Date>,
+    ) -> &mut IndexMap<FromCurrency, IndexMap<ToCurrency, ExchangeRate>> {
+        self.0.entry(*date.borrow()).or_default()
+    }
+
+    /// Returns a mutable reference to the rates for a specific date and from currency, creating a new entry if it doesn't exist.
+    fn _rates_for_day_and_from_currency(
+        &mut self,
+        date: impl Borrow<Date>,
+        from: impl Borrow<FromCurrency>,
+    ) -> &mut IndexMap<ToCurrency, ExchangeRate> {
+        self._rates_for_day(date).entry(*from.borrow()).or_default()
+    }
+
+    /// Loads the exchange rate for a specific date, from currency, and to currency.
+    /// If the rate is not found, it fetches it using the provided function.
+    ///
+    /// If a new rate is fetched it is inserted into the cache.
+    ///
+    /// Returns the exchange rate and a boolean indicating whether it was fetched from the network.
+    fn load_else_fetch(
+        &mut self,
+        date: impl Borrow<Date>,
+        from: impl Borrow<FromCurrency>,
+        to: impl Borrow<ToCurrency>,
+        fetch: impl FnOnce(&Date, FromCurrency, ToCurrency) -> Result<ExchangeRate>,
+    ) -> Result<(ExchangeRate, FetchedNew)> {
+        let date = *date.borrow();
+        let from = *from.borrow();
+        let to = *to.borrow();
+        let rates_on_day_from_source = self._rates_for_day_and_from_currency(date, from);
+
+        if let Some(rate) = rates_on_day_from_source.get(&to) {
+            Ok((*rate, false))
+        } else {
+            let rate = fetch(&date, from, to)?;
+            rates_on_day_from_source.insert(to, rate);
+            Ok((rate, true))
+        }
+    }
+}
+
+impl<T> ExchangeRatesFetcher<T> {
+    /// Loads the cached exchange rates from disk.
+    fn _load_cache(&self) -> Result<CachedRates> {
+        load_data(&self.path_to_cache, DATA_FILE_NAME_CACHED_RATES)
+    }
+
+    /// Saves the cached exchange rates to disk.
+    fn _save_cache(&self, rates: &CachedRates) -> Result<()> {
+        save_to_disk(
+            rates,
+            path_to_ron_file_with_base(&self.path_to_cache, DATA_FILE_NAME_CACHED_RATES),
+        )
+    }
+
+    fn do_fetch(
+        cache: &mut CachedRates,
+        target_currency: Currency,
+        items: Vec<Item>,
+    ) -> Result<(ExchangeRatesMap, FetchedNew)> {
+        let mut fetched_new_rates = false;
+        let mut rates: ExchangeRatesMap = IndexMap::new();
+        for expense in items {
+            let date = expense.transaction_date();
+            let from = *expense.currency();
+            let to = target_currency;
+            let (rate, is_new) = cache.load_else_fetch(date, from, to, get_exchange_rate)?;
+            fetched_new_rates |= is_new;
+            rates.insert(from, rate);
+        }
+        Ok((rates, fetched_new_rates))
+    }
+
+    fn load_cache_else_new(&self) -> CachedRates {
+        self._load_cache().unwrap_or_else(|_| {
+            debug!("No cached exchange rates found, fetching new rates.");
+            CachedRates::default()
+        })
+    }
+
+    fn update_cache_if_needed(&self, rates_by_day: &CachedRates, fetched_new_rates: bool) {
+        if !fetched_new_rates {
+            debug!("ℹ️ No new rates fetched, used only cached rates.");
+            return;
+        }
+        // Update cache
+        debug!(
+            "☑️ Fetched new rates, updating cache: {}",
+            self.path_to_cache.display()
+        );
+        match self._save_cache(rates_by_day) {
+            Ok(_) => debug!("✅ Cached exchange rates updated."),
+            Err(e) => {
+                // Failing to update cache is not critical, but we log it
+                // so that the user is aware of it.
+                // They can still use the fetched rates, but they won't be cached.
+                warn!(
+                    "Failed to cache exchange rates: {} (this has no affect on PDF generation.)",
+                    e
+                );
+            }
+        }
+    }
+}
+
+impl<T> FetchExchangeRates for ExchangeRatesFetcher<T> {
+    /// Fetches exchange rates from local cache if found, for the given target
+    /// currency and items, else if not found in local cache, fetches them
+    /// from the [Frankfurter API][api] and caches them for future use.
+    ///
+    /// Each item contains a "source currency" and a "transaction date".
+    ///
+    /// [api]: https://frankfurter.dev/
+    fn fetch_for_items(
+        &self,
+        target_currency: Currency,
+        items: Vec<Item>,
+    ) -> Result<ExchangeRates> {
+        let mut rates_by_day = self.load_cache_else_new();
+        let (rates, fetched_new_rates) = Self::do_fetch(&mut rates_by_day, target_currency, items)?;
+        debug!("✅ Fetched exchanges rates for #{} expenses.", rates.len());
+        self.update_cache_if_needed(&rates_by_day, fetched_new_rates);
+        let rates = ExchangeRates::builder()
+            .target_currency(target_currency)
+            .rates(rates)
+            .build();
+        Ok(rates)
+    }
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
+    use tempfile::{TempDir, tempdir};
     use test_log::test;
 
     use httpmock::Method::GET;
@@ -163,7 +298,7 @@ mod tests {
         let date = Date::from_str("2025-04-30").unwrap();
         let from = Currency::GBP;
         let to = Currency::EUR;
-        let rate = get_exchange_rate_with_fetcher(date, from, to, |url| {
+        let rate = _get_exchange_rate_with_fetcher(date, from, to, |url| {
             assert_eq!(
                 url,
                 "https://api.frankfurter.app/2025-04-30?from=GBP&to=EUR"
@@ -227,36 +362,11 @@ mod tests {
     }
 
     #[test]
-    fn test_get_exchange_rates_if_needed() {
-        let items = LineItemsPricedInSourceCurrency::Expenses(vec![
-            Item::builder()
-                .name("Coffee")
-                .transaction_date(Date::sample())
-                .quantity(2.0)
-                .unit_price(4.0)
-                .currency(Currency::GBP)
-                .build(),
-        ]);
-        let target_currency = Currency::EUR;
-        let rates =
-            get_exchange_rates_if_needed_with_fetcher(target_currency, &items, |date, from, to| {
-                assert_eq!(from, Currency::GBP);
-                assert_eq!(to, target_currency);
-                assert_eq!(date, Date::from_str("2025-05-31").unwrap());
-                Ok(UnitPrice::from(1.0)) // Mocking the exchange rate to always return 1.0
-            });
-        let rates = rates.unwrap();
-        let rates = rates.rates();
-        assert_eq!(rates.len(), 1);
-        assert!(rates.contains_key(&Currency::GBP));
-    }
-
-    #[test]
     fn test_get_exchange_rate_with_fetcher_when_from_to_is_equal() {
         let date = Date::from_str("2025-04-30").unwrap();
         let from = Currency::EUR;
         let to = Currency::EUR;
-        let rate = get_exchange_rate_with_fetcher(date, from, to, |url| {
+        let rate = _get_exchange_rate_with_fetcher(date, from, to, |url| {
             assert_eq!(
                 url,
                 "https://api.frankfurter.app/2025-04-30?from=EUR&to=EUR"
@@ -267,32 +377,73 @@ mod tests {
         assert_eq!(rate.unwrap(), UnitPrice::from(1.0));
     }
 
+    trait TestExchangeRatesFetcher {
+        fn tmp(tempdir: TempDir) -> ExchangeRatesFetcher<tempfile::TempDir>;
+    }
+    impl TestExchangeRatesFetcher for ExchangeRatesFetcher<tempfile::TempDir> {
+        fn tmp(tempdir: TempDir) -> ExchangeRatesFetcher<tempfile::TempDir> {
+            ExchangeRatesFetcher::builder()
+                .path_to_cache(tempdir.path().to_path_buf())
+                .extra(tempdir)
+                .build()
+        }
+    }
+
     #[test]
-    fn test_get_exchange_rates_if_needed_with_duplicate_currency() {
-        let date = Date::from_str("2025-05-01").unwrap();
-        let currency_twice = Currency::GBP;
-        let items = LineItemsPricedInSourceCurrency::Expenses(vec![
-            Item::builder()
-                .name("Coffee")
-                .transaction_date(date)
-                .quantity(1.0)
-                .unit_price(4.0)
-                .currency(currency_twice)
-                .build(),
-            Item::builder()
-                .name("Lunch")
-                .transaction_date(date)
-                .quantity(1.0)
-                .unit_price(10.0)
-                .currency(currency_twice)
-                .build(),
-        ]);
-        let target_currency = Currency::EUR;
-        let rates =
-            get_exchange_rates_if_needed_with_fetcher(target_currency, &items, |_d, _f, _t| {
-                Ok(UnitPrice::from(1.1))
-            });
-        let rates = rates.unwrap();
-        assert_eq!(rates.rates().len(), 1); // Only one GBP entry
+    fn test_if_feched_new_rates_is_false_cache_is_unchanged() {
+        let tempdir = tempdir().unwrap();
+        let fetcher = ExchangeRatesFetcher::tmp(tempdir);
+        fetcher.update_cache_if_needed(&CachedRates::default(), false);
+        let cache_path =
+            path_to_ron_file_with_base(&fetcher.path_to_cache, DATA_FILE_NAME_CACHED_RATES);
+        assert!(
+            !cache_path.exists(),
+            "Cache file should not exist when no new rates are fetched."
+        );
+    }
+
+    #[test]
+    fn test_if_feched_new_rates_is_true_cache_is_changed() {
+        let tempdir = tempdir().unwrap();
+        let path = tempdir.path().to_path_buf();
+        let fetcher = ExchangeRatesFetcher::tmp(tempdir);
+        let mut cache = CachedRates::default();
+        cache
+            ._rates_for_day_and_from_currency(Date::sample(), Currency::EUR)
+            .insert(Currency::USD, UnitPrice::from(1.2));
+        fetcher.update_cache_if_needed(&cache, true);
+
+        let loaded: CachedRates = load_data(path, DATA_FILE_NAME_CACHED_RATES).unwrap();
+        assert_eq!(loaded, cache, "Cache should be updated with new rates.");
+    }
+
+    #[test]
+    fn test_fetch_for_items_all_found_in_cache() {
+        let tempdir = tempdir().unwrap();
+        let fetcher = ExchangeRatesFetcher::tmp(tempdir);
+        let date = Date::sample();
+        let from = Currency::EUR;
+        let to = Currency::USD;
+        let rate = UnitPrice::from(1.2);
+
+        // Create a cache with the rate
+        let mut cache = CachedRates::default();
+        cache
+            ._rates_for_day_and_from_currency(date, from)
+            .insert(to, rate);
+        fetcher._save_cache(&cache).unwrap();
+
+        // Create an item that uses this rate
+        let item = Item::builder()
+            .name("Test Item")
+            .transaction_date(date)
+            .quantity(10.0)
+            .unit_price(100.0)
+            .currency(from)
+            .build();
+
+        // Fetch rates for the item
+        let rates = fetcher.fetch_for_items(to, vec![item]).unwrap();
+        assert_eq!(rates.rates().get(&from).unwrap(), &rate);
     }
 }
