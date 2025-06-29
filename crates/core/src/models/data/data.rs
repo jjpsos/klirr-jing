@@ -122,8 +122,9 @@ impl Data {
                             self.information.months_off_record(),
                         )?;
                         let worked_days = working_days - days_off.map(|d| *d).unwrap_or(0);
+                        let service_name = format!("{} {}", self.service_fees.name(), target_month);
                         let service = Item::builder()
-                            .name(self.service_fees.name().clone())
+                            .name(service_name)
                             .transaction_date(invoice_date)
                             .quantity(Quantity::from(worked_days as f64))
                             .unit_price(*self.service_fees.unit_price())

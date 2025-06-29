@@ -31,7 +31,10 @@ pub fn run(input: CliArgs) {
         }
         Command::Invoice(invoice_input) => {
             let _ = run_invoice_command(invoice_input)
-                .inspect_err(|e| error!("Error creating PDF: {}", e));
+                .inspect_err(|e| error!("Error creating PDF: {}", e))
+                .inspect(|path| {
+                    open_path(path);
+                });
         }
         Command::Data(data_admin_input) => {
             let _ = run_data_command(data_admin_input.command()).inspect_err(|e| {

@@ -228,8 +228,8 @@
     table.header(
       [#strong(l18n.line_items.description)],
       [#strong(l18n.line_items.when)],
-      [#strong(l18n.line_items.unit_price)],
       [#strong(l18n.line_items.quantity)],
+      [#strong(l18n.line_items.unit_price)],
       [#strong(l18n.line_items.total_cost)],
     ),
     table.hline(stroke: 0.2pt),

@@ -47,14 +47,15 @@ pub fn render_sample() -> Result<PathBuf> {
 fn run_invoice_command_with_base_path(
     input: InvoiceInput,
     data_path: impl AsRef<Path>,
-) -> Result<()> {
+) -> Result<PathBuf> {
     let input = input.parsed()?;
     info!("🔮 Starting PDF creation, input: {}...", input);
     let pdf_location = create_pdf_with_data_base_path(data_path, input, render)?;
-    save_pdf_location_to_tmp_file(pdf_location)
+    save_pdf_location_to_tmp_file(pdf_location.clone())?;
+    Ok(pdf_location)
 }
 
-pub fn run_invoice_command(input: InvoiceInput) -> Result<()> {
+pub fn run_invoice_command(input: InvoiceInput) -> Result<PathBuf> {
     run_invoice_command_with_base_path(input, data_dir())
 }
 

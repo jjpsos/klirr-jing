@@ -605,6 +605,7 @@ mod tests {
         let start = YearAndMonth::december(2024);
         let end = YearAndMonth::april(2025);
         assert_eq!(end.elapsed_months_since(start), 4);
+        assert!(start < end);
     }
 
     #[test]
