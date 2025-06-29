@@ -115,8 +115,7 @@ Which will write to `$DATA_PATH/klirr/data/invoice_info.ron`
 
 > [!TIP]
 > There is currently no support for subtracting/removing expenses using Cli, if you made a mistake
-> or otherwise wanna perform some changes, manually edit the file `$DATA_PATH/klirr/data/invoice_info.ron`
-> $DATA_PATH depends [on OS][data_path], but
+> or otherwise wanna perform some changes, manually edit the file `$DATA_PATH/klirr/data/invoice_info.ron` > $DATA_PATH depends [on OS][data_path], but
 > typically `$HOME/Library/Application Support` on macOS
 > using your favourite text editor.
 >
@@ -141,8 +140,7 @@ klirr data expenses --month 2025-05 -e "Sandwich, 6, EUR, 1, 2025-05-31" -e "Lun
 > if you had an expense on last of June but wanna include that expense in the invoice made in July
 > should save the expense under July.
 
-> [!NOTE]
-> `klirr data expenses` will aggregate identical expenses (disregarding `quantity`) under one entry and sum
+> [!NOTE] > `klirr data expenses` will aggregate identical expenses (disregarding `quantity`) under one entry and sum
 > up the quantity. So if you run the `klirr data expenses` twice with identical input and lets say one expense
 > item having quantity `2`, if you run it lets say four times, it will still show as one entry but with a
 > quantity of `8`.
@@ -186,7 +184,7 @@ Klirr is a Swedish 🇸🇪 an onomatopoeia word meaning "clink" - the sound of 
 
 This is an example of the _Aioo_ `Layout` rendered using `English`.
 
-[![Invoice Preview](.github/assets/example.jpg)](.github/assets/example.jpg)
+[![Invoice Preview](assets/example.jpg)](assets/example.jpg)
 
 [ron]: https://github.com/ron-rs/ron
 [data_path]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
