@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 description = "Zero-maintenance and smart FOSS generating beautiful invoices for services and expenses."
 license = "MIT"
-license-file = "../../LICENSE.txt"
 documentation = "https://docs.rs/klirr-core"
 repository = "https://github.com/Sajjon/klirr"
 
