@@ -16,10 +16,13 @@ pub const BINARY_NAME: &str = "klirr";
 ///
 /// [ref]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
 pub fn data_dir() -> PathBuf {
-    dirs_next::data_local_dir()
+    let dir = dirs_next::data_local_dir()
         .expect("Should have a data directory")
         .join(BINARY_NAME)
-        .join("data")
+        .join("data");
+    create_folder_if_needed(&dir)
+        .expect("Should be able to create directory at data_dir()/klirr/data");
+    dir
 }
 
 pub fn save_to_disk<T: Serialize>(model: &T, path: impl AsRef<Path>) -> Result<()> {
