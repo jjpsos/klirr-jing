@@ -8,9 +8,6 @@ documentation = "https://docs.rs/klirr-core"
 repository = "https://github.com/Sajjon/klirr"
 
 [dependencies]
-# Internal dependencies
-# NONE
-
 # External dependencies
 chrono.workspace = true
 derive_more.workspace = true

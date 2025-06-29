@@ -2,11 +2,12 @@
 resolver = "3"
 members = ["crates/cli", "crates/render", "crates/core"]
 
+[patch.crates-io]
+klirr-core = { path = "crates/core" }
+klirr-render = { path = "crates/render" }
+
 [workspace.dependencies]
 # Internal dependencies
-klirr = { path = "crates/cli" }
-klirr-render = { path = "crates/render" }
-klirr-core = { path = "crates/core" }
 
 # External dependencies
 chrono = "0.4.41"
