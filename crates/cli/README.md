@@ -184,7 +184,7 @@ Klirr is a Swedish 🇸🇪 an onomatopoeia word meaning "clink" - the sound of 
 
 This is an example of the _Aioo_ `Layout` rendered using `English`.
 
-[![Invoice Preview](assets/example.jpg)](assets/example.jpg)
+[![Invoice Preview](crates/cli/assets/example.jpg)](crates/cli/assets/example.jpg)
 
 [ron]: https://github.com/ron-rs/ron
 [data_path]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
