@@ -30,7 +30,7 @@ You need [Rust](https://www.rust-lang.org/tools/install) to use this software.
 ## Install `klirr`
 
 ```bash
-cargo install --git https://github.com/Sajjon/klirr
+cargo install klirr
 ```
 
 # Usage
