@@ -142,7 +142,8 @@ klirr data expenses --month 2025-05 -e "Sandwich, 6, EUR, 1, 2025-05-31" -e "Lun
 > if you had an expense on last of June but wanna include that expense in the invoice made in July
 > should save the expense under July.
 
-> [!NOTE] > `klirr data expenses` will aggregate identical expenses (disregarding `quantity`) under one entry and sum
+> [!NOTE]
+> `klirr data expenses` will aggregate identical expenses (disregarding `quantity`) under one entry and sum
 > up the quantity. So if you run the `klirr data expenses` twice with identical input and lets say one expense
 > item having quantity `2`, if you run it lets say four times, it will still show as one entry but with a
 > quantity of `8`.
