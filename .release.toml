@@ -14,8 +14,7 @@ dependent-version = "upgrade" # upgrade version for dependent crates
 
 [release]
 changelog = "CHANGELOG.md"
-# Set to true to use conventional commits to auto-generate changelog entries (optional)
-# changelog-commit-conventional = true
+update-workspace-dependencies = true
 
 [git]
 push-remote = "origin"
