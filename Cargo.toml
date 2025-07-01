@@ -8,6 +8,8 @@ klirr-render = { path = "crates/render" }
 
 [workspace.dependencies]
 # Internal dependencies
+klirr-core = "*"
+klirr-render = "*"
 
 # External dependencies
 chrono = "0.4.41"

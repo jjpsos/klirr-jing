@@ -9,8 +9,8 @@ repository = "https://github.com/Sajjon/klirr"
 
 [dependencies]
 # Internal dependencies
-klirr-core = "0.1.5"
-klirr-render = "0.1.5"
+klirr-core.workspace = true
+klirr-render.workspace = true
 
 # External dependencies
 chrono.workspace = true
