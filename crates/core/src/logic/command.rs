@@ -1,15 +1,59 @@
 use crate::prelude::*;
 use serde::de::DeserializeOwned;
 
-pub fn init_data_directory_at(
+fn input_data_at(
+    default_data: Data,
     write_path: impl AsRef<Path>,
-    provide_data: impl FnOnce() -> Result<Data>,
+    provide_data: impl FnOnce(Data) -> Result<Data>,
 ) -> Result<()> {
-    let data_dir = data_dir();
-    info!("Initializing data directory at: {}", data_dir.display());
-    let data = provide_data()?;
-    info!("Data init successfully, saving to: {}", data_dir.display());
+    let data = provide_data(default_data)?;
     save_data_with_base_path(data, write_path)?;
+    Ok(())
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DataSelector {
+    /// All but expensed months
+    All,
+    Vendor,
+    Client,
+    Information,
+    PaymentInfo,
+    ServiceFees,
+}
+
+impl DataSelector {
+    pub fn includes(&self, target: DataSelector) -> bool {
+        match self {
+            DataSelector::All => true,
+            DataSelector::Vendor => matches!(target, DataSelector::Vendor),
+            DataSelector::Client => matches!(target, DataSelector::Client),
+            DataSelector::Information => matches!(target, DataSelector::Information),
+            DataSelector::PaymentInfo => matches!(target, DataSelector::PaymentInfo),
+            DataSelector::ServiceFees => matches!(target, DataSelector::ServiceFees),
+        }
+    }
+}
+
+pub fn edit_data_at(
+    path: impl AsRef<Path>,
+    provide_data: impl FnOnce(Data) -> Result<Data>,
+) -> Result<()> {
+    let path = path.as_ref();
+    info!("Editing data at: {}", path.display());
+    let existing = read_data_from_disk_with_base_path(path)?;
+    input_data_at(existing, path, provide_data)?;
+    info!("✅ Data edit done");
+    Ok(())
+}
+
+pub fn init_data_at(
+    write_path: impl AsRef<Path>,
+    provide_data: impl FnOnce(Data) -> Result<Data>,
+) -> Result<()> {
+    let write_path = write_path.as_ref();
+    info!("Initializing data directory at: {}", write_path.display());
+    input_data_at(Data::sample(), write_path, provide_data)?;
     info!("✅ Data init done, you're ready: `{} invoice`", BINARY_NAME);
     Ok(())
 }
@@ -98,10 +142,10 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_data_directory() {
+    fn test_read_data_from_disk() {
         let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
         save_data_with_base_path(Data::sample(), tempdir.path()).unwrap();
-        let result = validate_data_directory_with_base_path(tempdir.path());
+        let result = read_data_from_disk_with_base_path(tempdir.path());
         assert!(
             result.is_ok(),
             "Expected validation to succeed, got: {:?}",
@@ -112,7 +156,7 @@ mod tests {
     #[test]
     fn test_init_data_directory_at() {
         let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
-        let result = init_data_directory_at(tempdir.path(), || Ok(Data::sample()));
+        let result = init_data_at(tempdir.path(), Ok);
         assert!(
             result.is_ok(),
             "Expected data directory initialization to succeed, got: {:?}",
@@ -152,5 +196,61 @@ mod tests {
         // Verify that the month was recorded correctly
         let data = expensed_months(tempdir.path()).unwrap();
         assert!(data.contains(&month));
+    }
+
+    #[test]
+    fn test_data_selector_includes() {
+        let all_selector = DataSelector::All;
+        assert!(all_selector.includes(DataSelector::All));
+        assert!(all_selector.includes(DataSelector::Vendor));
+        assert!(all_selector.includes(DataSelector::Client));
+        assert!(all_selector.includes(DataSelector::Information));
+        assert!(all_selector.includes(DataSelector::PaymentInfo));
+        assert!(all_selector.includes(DataSelector::ServiceFees));
+
+        let vendor_selector = DataSelector::Vendor;
+        assert!(vendor_selector.includes(DataSelector::Vendor));
+        assert!(!vendor_selector.includes(DataSelector::Client));
+
+        let selector = DataSelector::Client;
+        assert!(selector.includes(DataSelector::Client));
+        assert!(!selector.includes(DataSelector::Vendor));
+        assert!(!selector.includes(DataSelector::All));
+
+        let selector = DataSelector::Information;
+        assert!(selector.includes(DataSelector::Information));
+        assert!(!selector.includes(DataSelector::Vendor));
+        assert!(!selector.includes(DataSelector::All));
+
+        let selector = DataSelector::PaymentInfo;
+        assert!(selector.includes(DataSelector::PaymentInfo));
+        assert!(!selector.includes(DataSelector::Vendor));
+        assert!(!selector.includes(DataSelector::All));
+
+        let selector = DataSelector::ServiceFees;
+        assert!(selector.includes(DataSelector::ServiceFees));
+        assert!(!selector.includes(DataSelector::Vendor));
+        assert!(!selector.includes(DataSelector::All));
+    }
+
+    #[test]
+    fn test_edit_data_at() {
+        let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
+        let data = Data::sample();
+        let first = CompanyInformation::sample_vendor();
+        let second = CompanyInformation::sample_client();
+        assert_ne!(
+            first, second,
+            "Sample vendor and client should not be the same"
+        );
+        save_data_with_base_path(data.with_client(first.clone()), tempdir.path()).unwrap();
+        let result = edit_data_at(tempdir.path(), |data| Ok(data.with_client(second.clone())));
+        assert!(
+            result.is_ok(),
+            "Expected data edit to succeed, got: {:?}",
+            result
+        );
+        let edited_data = read_data_from_disk_with_base_path(tempdir.path()).unwrap();
+        assert_eq!(*edited_data.client(), second);
     }
 }
