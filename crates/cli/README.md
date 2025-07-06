@@ -11,6 +11,34 @@ Klirr is a **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomati
 > [!TIP]
 > Scroll down to example invoice in the bottom to see what the invoice looks like.
 
+<!-- MarkdownTOC -->
+
+- Description
+- Installation
+	- Install Rust
+	- Install `klirr`
+- Usage
+	- Init
+	- Edit Data
+			- Manually
+	- Generate Invoice
+		- Out of office for some days?
+		- Took vacation a whole month or parental leave?
+	- Invoice for expenses
+		- Add expenses
+		- Generate expenses invoice
+	- Email
+		- Init
+		- Send Test email
+		- Security
+- Development
+- How it works
+- Etymology
+- Example
+
+<!-- /MarkdownTOC -->
+
+
 # Description
 
 - **A**esthetic – **Produces polished, professional invoices**. Klirr uses Typst templates to generate a beautiful invoice PDF for your services and expenses, so the final result looks as good as a hand-crafted invoice, with consistent styling and formatting.
@@ -21,15 +49,13 @@ Klirr is a **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomati
 - **N**imble - **Quickly and effortlessly generates invoices in no-time**
 - **G**ratis – **Free and open source forever**.
 
-If that was not all, klirr also supports generation of expense invoices which automatically fetched currency exchange rates and translates them into your currency at the date of transaction for all your purchases (see below).
+If that was not enough, klirr also supports generation of expense invoices which automatically fetched currency exchange rates and translates them into your currency at the date of transaction for all your purchases (see below).
 
 Klirr also supports automatic emailing of the invoices (see below).
 
 # Installation
 
-## Required Software
-
-### Rust
+## Install Rust
 
 You need [Rust](https://www.rust-lang.org/tools/install) to use this software.
 
