@@ -11,30 +11,30 @@ Klirr is a **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomati
 > [!TIP]
 > Scroll down to example invoice in the bottom to see what the invoice looks like.
 
-<!-- MarkdownTOC -->
+<!-- MarkdownTOC autolink="true" -->
 
-- Description
-- Installation
-	- Install Rust
-	- Install `klirr`
-- Usage
-	- Init
-	- Edit Data
-			- Manually
-	- Generate Invoice
-		- Out of office for some days?
-		- Took vacation a whole month or parental leave?
-	- Invoice for expenses
-		- Add expenses
-		- Generate expenses invoice
-	- Email
-		- Init
-		- Send Test email
-		- Security
-- Development
-- How it works
-- Etymology
-- Example
+- [Description](#description)
+- [Installation](#installation)
+	- [Install Rust](#install-rust)
+	- [Install `klirr`](#install-klirr)
+- [Usage](#usage)
+	- [Init](#init)
+	- [Edit Data](#edit-data)
+			- [Manually](#manually)
+	- [Generate Invoice](#generate-invoice)
+		- [Out of office for some days?](#out-of-office-for-some-days)
+		- [Took vacation a whole month or parental leave?](#took-vacation-a-whole-month-or-parental-leave)
+	- [Invoice for expenses](#invoice-for-expenses)
+		- [Add expenses](#add-expenses)
+		- [Generate expenses invoice](#generate-expenses-invoice)
+	- [Email](#email)
+		- [Init](#init-1)
+		- [Send Test email](#send-test-email)
+		- [Security](#security)
+- [Development](#development)
+- [How it works](#how-it-works)
+- [Etymology](#etymology)
+- [Example](#example)
 
 <!-- /MarkdownTOC -->
 
