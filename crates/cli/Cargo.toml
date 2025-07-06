@@ -1,6 +1,6 @@
 [package]
 name = "klirr"
-version = "0.1.12"
+version = "0.1.13"
 edition = "2024"
 description = "Zero-maintenance and smart FOSS generating beautiful invoices for services and expenses."
 license = "MIT"
