@@ -6,7 +6,7 @@
 
 # Klirr
 
-Klirr is a **AMAZING** (**A**esthetic, **M**ult-layouts/-language, **A**utomatic, **Z**ero-Maintenance, **I**nter-month Idempotent, **N**imble, **G**ratis) invoice solution written in Rust + [Typst](https://github.com/typst/typst)
+Klirr is a **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomatic, **Z**ero-Maintenance, **I**nter-month Idempotent, **N**imble, **G**ratis) invoice solution written in Rust + [Typst](https://github.com/typst/typst)
 
 > [!TIP]
 > Scroll down to example invoice in the bottom to see what the invoice looks like.
