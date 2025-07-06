@@ -19,12 +19,33 @@ pub struct CliArgs {
 #[derive(Debug, Subcommand, Unwrap)]
 pub enum Command {
     Sample,
+    Email(EmailInput),
 
     /// The CLI arguments for generating an invoice PDF.
     Invoice(InvoiceInput),
 
     /// CLI arguments for admin tasks related to data.
     Data(DataAdminInput),
+}
+
+#[derive(Debug, Args, Getters, PartialEq)]
+pub struct EmailInput {
+    #[command(subcommand)]
+    #[getset(get = "pub")]
+    command: EmailInputCommand,
+}
+
+#[derive(Debug, Subcommand, Unwrap, PartialEq)]
+pub enum EmailInputCommand {
+    /// Initializes the data related to sending emails in the data directory,
+    Init,
+    /// Validates the data related to sending emails in the data directory,
+    Validate,
+    Edit(EditEmailInput),
+    /// Sends an email with a sample invoice as PDF attachment using the data
+    /// in the data directory, which includes email account, SMTP server and
+    /// recipient information.
+    Test,
 }
 
 /// The CLI arguments for data management, such as initializing the data directory,
@@ -35,13 +56,13 @@ pub struct DataAdminInput {
     /// validating the data, or recording expenses or month off.
     #[command(subcommand)]
     #[getset(get = "pub")]
-    command: DataAdminInputCommands,
+    command: DataAdminInputCommand,
 }
 
 /// The commands available for data management, such as initializing the data directory,
 /// validating the data, or recording expenses or month off.
 #[derive(Debug, Subcommand, Unwrap, PartialEq)]
-pub enum DataAdminInputCommands {
+pub enum DataAdminInputCommand {
     /// Initializes the data in the data directory, creating it if it does not exist.
     /// Such as information about you as a vendor and your client, payment information
     /// pricing etc
@@ -61,6 +82,13 @@ pub enum DataAdminInputCommands {
 }
 
 #[derive(Debug, Args, Getters, PartialEq)]
+pub struct EditEmailInput {
+    #[arg(value_enum)]
+    #[getset(get = "pub")]
+    selector: EditEmailInputSelector,
+}
+
+#[derive(Debug, Args, Getters, PartialEq)]
 pub struct EditDataInput {
     #[arg(value_enum)]
     #[getset(get = "pub")]
@@ -76,6 +104,38 @@ pub enum EditDataInputSelector {
     Information,
     PaymentInfo,
     ServiceFees,
+}
+
+#[derive(Clone, Copy, Debug, Subcommand, Unwrap, PartialEq, ValueEnum)]
+#[clap(rename_all = "kebab_case")]
+pub enum EditEmailInputSelector {
+    All,
+    AppPassword,
+    EncryptionPassword,
+    Template,
+    Smtp,
+    ReplyTo,
+    Sender,
+    Recipients,
+    Cc,
+    Bcc,
+}
+
+impl From<EditEmailInputSelector> for EmailSettingsSelector {
+    fn from(selector: EditEmailInputSelector) -> Self {
+        match selector {
+            EditEmailInputSelector::All => EmailSettingsSelector::All,
+            EditEmailInputSelector::AppPassword => EmailSettingsSelector::AppPassword,
+            EditEmailInputSelector::EncryptionPassword => EmailSettingsSelector::EncryptionPassword,
+            EditEmailInputSelector::Template => EmailSettingsSelector::Template,
+            EditEmailInputSelector::Smtp => EmailSettingsSelector::SmtpServer,
+            EditEmailInputSelector::ReplyTo => EmailSettingsSelector::ReplyTo,
+            EditEmailInputSelector::Sender => EmailSettingsSelector::Sender,
+            EditEmailInputSelector::Recipients => EmailSettingsSelector::Recipients,
+            EditEmailInputSelector::Cc => EmailSettingsSelector::CcRecipients,
+            EditEmailInputSelector::Bcc => EmailSettingsSelector::BccRecipients,
+        }
+    }
 }
 
 impl From<EditDataInputSelector> for DataSelector {
@@ -163,6 +223,12 @@ pub struct InvoiceInput {
     #[arg(long, short = 'o')]
     #[builder(setter(into, strip_option), default = None)]
     out: Option<PathBuf>,
+
+    /// Whether to send the invoice via email after generating it - if
+    /// the email settings are configured.
+    #[arg(long, short = 'e')]
+    #[builder(setter(into), default = false)]
+    email: bool,
 }
 
 impl InvoiceInput {
@@ -199,6 +265,11 @@ impl InvoiceInput {
                 })?;
             }
         }
+        let email_config = if self.email {
+            validate_email_data().map(Some)
+        } else {
+            Ok(None)
+        }?;
         let items = self._invoiced_items()?;
         let valid = ValidInput::builder()
             .month(self.month.year_and_month())
@@ -206,6 +277,7 @@ impl InvoiceInput {
             .items(items)
             .language(*self.language())
             .maybe_output_path(self.out)
+            .email(email_config)
             .build();
         Ok(valid)
     }
@@ -224,7 +296,7 @@ mod tests {
             assert!(matches!(
                 input.command,
                 Command::Data(DataAdminInput {
-                    command: DataAdminInputCommands::Init
+                    command: DataAdminInputCommand::Init
                 })
             ));
         }
@@ -235,7 +307,7 @@ mod tests {
             assert!(matches!(
                 input.command,
                 Command::Data(DataAdminInput {
-                    command: DataAdminInputCommands::Validate
+                    command: DataAdminInputCommand::Validate
                 })
             ));
         }
@@ -259,7 +331,7 @@ mod tests {
             ]);
             assert_eq!(
                 *input.command.unwrap_data().command(),
-                DataAdminInputCommands::Expenses(ExpensesInput {
+                DataAdminInputCommand::Expenses(ExpensesInput {
                     month: YearAndMonth::from_str("2025-05").unwrap(),
                     expenses: vec![item_1, item_2]
                 })
@@ -402,5 +474,54 @@ mod tests {
         let selector = EditDataInputSelector::Client;
         let data_selector: DataSelector = selector.into();
         assert_eq!(data_selector, DataSelector::Client);
+    }
+
+    #[test]
+    fn test_email_settings_selector_from_edit_email_input_selector() {
+        let selector = EditEmailInputSelector::All;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::All);
+
+        let selector = EditEmailInputSelector::AppPassword;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::AppPassword);
+
+        let selector = EditEmailInputSelector::EncryptionPassword;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(
+            email_settings_selector,
+            EmailSettingsSelector::EncryptionPassword
+        );
+
+        let selector = EditEmailInputSelector::Template;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::Template);
+
+        let selector = EditEmailInputSelector::Smtp;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::SmtpServer);
+
+        let selector = EditEmailInputSelector::ReplyTo;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::ReplyTo);
+
+        let selector = EditEmailInputSelector::Sender;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::Sender);
+
+        let selector = EditEmailInputSelector::Recipients;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::Recipients);
+
+        let selector = EditEmailInputSelector::Cc;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(email_settings_selector, EmailSettingsSelector::CcRecipients);
+
+        let selector = EditEmailInputSelector::Bcc;
+        let email_settings_selector: EmailSettingsSelector = selector.into();
+        assert_eq!(
+            email_settings_selector,
+            EmailSettingsSelector::BccRecipients
+        );
     }
 }

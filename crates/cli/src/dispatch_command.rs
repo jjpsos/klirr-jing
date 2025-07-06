@@ -1,5 +1,12 @@
 use crate::prelude::*;
 use klirr_render::prelude::render;
+use secrecy::SecretString;
+
+fn init_email_data(
+    provide_data: impl FnOnce(EncryptedEmailSettings) -> Result<EncryptedEmailSettings>,
+) -> Result<()> {
+    init_email_data_at(data_dir(), provide_data)
+}
 
 fn init_data(provide_data: impl FnOnce(Data) -> Result<Data>) -> Result<()> {
     init_data_at(data_dir_create_if(true), provide_data)
@@ -7,6 +14,12 @@ fn init_data(provide_data: impl FnOnce(Data) -> Result<Data>) -> Result<()> {
 
 fn edit_data(provide_data: impl FnOnce(Data) -> Result<Data>) -> Result<()> {
     edit_data_at(data_dir(), provide_data)
+}
+
+fn edit_email_data(
+    provide_data: impl FnOnce(EncryptedEmailSettings) -> Result<EncryptedEmailSettings>,
+) -> Result<()> {
+    edit_email_data_at(data_dir(), provide_data)
 }
 
 fn validate_data() -> Result<()> {
@@ -31,35 +44,44 @@ fn record_month_off(month: &YearAndMonth) -> Result<()> {
     record_month_off_with_base_path(month, data_dir())
 }
 
-/// Curry a function that takes two arguments into a function that takes one argument and returns another function.
-/// This is useful for partially applying functions in a functional programming style.
-fn curry<T, U, R>(f: impl FnOnce(T, U) -> R, u: U) -> impl FnOnce(T) -> R {
-    move |t| f(t, u)
-}
-
-pub fn run_data_command(command: &DataAdminInputCommands) -> Result<()> {
+pub fn run_data_command(command: &DataAdminInputCommand) -> Result<()> {
     match command {
-        DataAdminInputCommands::Init => init_data(curry(ask_for_data, None)),
-        DataAdminInputCommands::Validate => validate_data(),
-        DataAdminInputCommands::Edit(input) => edit_data(curry(
+        DataAdminInputCommand::Init => init_data(curry2(ask_for_data, None)),
+        DataAdminInputCommand::Validate => validate_data(),
+        DataAdminInputCommand::Edit(input) => edit_data(curry2(
             ask_for_data,
             Some(DataSelector::from(*input.selector())),
         )),
-        DataAdminInputCommands::MonthOff(month_off_input) => {
+        DataAdminInputCommand::MonthOff(month_off_input) => {
             record_month_off(month_off_input.month())
         }
-        DataAdminInputCommands::Expenses(expenses_input) => {
+        DataAdminInputCommand::Expenses(expenses_input) => {
             record_expenses(expenses_input.month(), expenses_input.expenses())
         }
     }
 }
 
-pub fn render_sample() -> Result<PathBuf> {
+pub fn render_sample() -> Result<NamedPdf> {
+    render_sample_with_nonce(false)
+}
+
+/// The nonce is used to ensure that the PDF is unique each time it is rendered.
+/// This is useful for testing purposes, to avoid email spamming protection mechanisms.
+/// It is not meant to be used in production, where in fact we WANT the PDF to
+/// be identical each time it is rendered.
+pub fn render_sample_with_nonce(use_nonce: bool) -> Result<NamedPdf> {
     let path = dirs_next::home_dir()
         .expect("Expected to be able to find HOME dir")
         .join("klirr_sample.pdf");
+    let mut data = Data::sample();
+    if use_nonce {
+        let vat = format!("VAT{} {}", rand::random::<u64>(), rand::random::<u64>());
+        data = data
+            .clone()
+            .with_client(data.client().clone().with_vat_number(vat));
+    }
     create_pdf_with_data(
-        Data::sample(),
+        data,
         ValidInput::builder()
             .maybe_output_path(path)
             .month(YearAndMonth::last())
@@ -71,15 +93,55 @@ pub fn render_sample() -> Result<PathBuf> {
 fn run_invoice_command_with_base_path(
     input: InvoiceInput,
     data_path: impl AsRef<Path>,
-) -> Result<PathBuf> {
+) -> Result<NamedPdf> {
     let input = input.parsed()?;
     info!("🔮 Starting PDF creation, input: {}...", input);
-    let pdf_location = create_pdf_with_data_base_path(data_path, input, render)?;
-    save_pdf_location_to_tmp_file(pdf_location.clone())?;
-    Ok(pdf_location)
+    let email_settings = input.email().clone();
+    let named_pdf = create_pdf_with_data_base_path(data_path, input, render)?;
+    save_pdf_location_to_tmp_file(named_pdf.saved_at().clone())?;
+    if let Some(email_settings) = email_settings {
+        send_email_with_settings_for_pdf(&named_pdf, &email_settings)?
+    }
+    Ok(named_pdf)
 }
 
-pub fn run_invoice_command(input: InvoiceInput) -> Result<PathBuf> {
+fn validate_email_data_with(
+    get_email_password: impl FnOnce() -> Result<SecretString>,
+) -> Result<DecryptedEmailSettings> {
+    validate_email_data_at(data_dir(), get_email_password)
+}
+pub fn validate_email_data() -> Result<DecryptedEmailSettings> {
+    validate_email_data_with(get_email_encryption_password)
+}
+
+fn load_email_data_and_send_test_email_with(
+    get_email_password: impl FnOnce() -> Result<SecretString>,
+    render_sample: impl FnOnce() -> Result<NamedPdf>,
+) -> Result<()> {
+    load_email_data_and_send_test_email_at(data_dir(), get_email_password, render_sample)
+}
+pub fn load_email_data_and_send_test_email(
+    render_sample: impl FnOnce() -> Result<NamedPdf>,
+) -> Result<()> {
+    load_email_data_and_send_test_email_with(get_email_encryption_password, render_sample)
+}
+
+pub fn run_email_command(
+    command: &EmailInputCommand,
+    render_sample: impl FnOnce() -> Result<NamedPdf>,
+) -> Result<()> {
+    match command {
+        EmailInputCommand::Edit(input) => edit_email_data(curry2(
+            ask_for_email,
+            Some(EmailSettingsSelector::from(*input.selector())),
+        )),
+        EmailInputCommand::Init => init_email_data(curry2(ask_for_email, None)),
+        EmailInputCommand::Validate => validate_email_data().map_to_void(),
+        EmailInputCommand::Test => load_email_data_and_send_test_email(render_sample),
+    }
+}
+
+pub fn run_invoice_command(input: InvoiceInput) -> Result<NamedPdf> {
     run_invoice_command_with_base_path(input, data_dir())
 }
 
