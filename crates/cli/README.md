@@ -18,8 +18,11 @@ Klirr is an **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomat
 
 - [Description](#description)
 - [Installation](#installation)
-	- [Install Rust](#install-rust)
-	- [Install `klirr`](#install-klirr)
+    - [Pre-built binaries](#prebuilt-binaries)
+        - [brew](#brew)
+    - [Build](#manual-install)
+	    - [Install Rust](#install-rust)
+	    - [Install `klirr`](#install-klirr)
 - [Usage](#usage)
 	- [Init](#init)
 	- [Edit Data](#edit-data)
@@ -57,11 +60,27 @@ Klirr also supports automatic emailing of the invoices (see below).
 
 # Installation<a href="#installation" id="installation"/>[ ^](#thetoc)
 
-## Install Rust<a href="#install-rust" id="install-rust"/>[ ^](#thetoc)
+You can either install `klirr` from a prebuilt binary or you can build it yourself.
+
+## Pre-built binaries<a href="#prebuilt-binaries" id="prebuilt-binaries"/>[ ^](#thetoc)
+
+### brew<a href="#brew" id="brew"/>[ ^](#thetoc)
+
+> [!WARNING]
+> brew support is work in progress, might not work yet.
+```bash
+brew install Sajjon/klirr/klirr
+```
+
+## Build<a href="#manual-install" id="manual-install"/>[ ^](#thetoc)
+
+If you wanna build your self you can do it with Rust and cargo.
+
+### Install Rust<a href="#install-rust" id="install-rust"/>[ ^](#thetoc)
 
 You need [Rust](https://www.rust-lang.org/tools/install) to use this software.
 
-## Install `klirr`<a href="#install-klirr" id="install-klirr"/>[ ^](#thetoc)
+### Install `klirr`<a href="#install-klirr" id="install-klirr"/>[ ^](#thetoc)
 
 ```bash
 cargo install klirr
