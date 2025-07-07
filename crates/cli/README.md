@@ -6,14 +6,17 @@
 
 # Klirr
 
-Klirr is a **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomatic, **Z**ero-Maintenance, **I**nter-month Idempotent, **N**imble, **G**ratis) invoice solution written in Rust + [Typst](https://github.com/typst/typst)
+Klirr is an **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomatic, **Z**ero-Maintenance, **I**nter-month Idempotent, **N**imble, **G**ratis) invoice solution written in Rust + [Typst](https://github.com/typst/typst)
 
 > [!TIP]
 > Scroll down to example invoice in the bottom to see what the invoice looks like.
+> 
+> Or try it out with `cargo install klirr && klirr sample`
 
-<!-- MarkdownTOC autolink="true" -->
+# Table Of Contents <a href="#thetoc" id="thetoc"/>
+<!-- disabledMarkdownTOC autolink="true" markdown_preview="github" -->
 
-- [Description](#description)
+- [Description](#description-)
 - [Installation](#installation)
 	- [Install Rust](#install-rust)
 	- [Install `klirr`](#install-klirr)
@@ -39,7 +42,7 @@ Klirr is a **AMAZING** (**A**esthetic, **M**ulti-layouts/-language, **A**utomati
 <!-- /MarkdownTOC -->
 
 
-# Description
+# Description [^](#thetoc)
 
 - **A**esthetic – **Produces polished, professional invoices**. Klirr uses Typst templates to generate a beautiful invoice PDF for your services and expenses, so the final result looks as good as a hand-crafted invoice, with consistent styling and formatting.
 - **M**ultiple layouts & languages – **Localized and dynamic with support for multiple layouts**. Klirr dynamically loads invoice labels in different languages via i18n, and currently supports English and Swedish (adding more languages is trivial). This means your invoices can easily be generated in the language that suits you or your client. The invoice format is powered by Typst, and while Klirr comes with one elegant layout by default, the code is prepared to very easily support additional layouts. You can extend or customize the template system to suit different styling needs, ensuring the solution can grow with your business.
@@ -53,7 +56,7 @@ If that was not enough, klirr also supports generation of expense invoices which
 
 Klirr also supports automatic emailing of the invoices (see below).
 
-# Installation
+# Installation [^](#thetoc)
 
 ## Install Rust
 
@@ -65,7 +68,7 @@ You need [Rust](https://www.rust-lang.org/tools/install) to use this software.
 cargo install klirr
 ```
 
-# Usage
+# Usage [^](#thetoc)
 
 You can try klirr out with sample data before you set it up with your information if you want. Try running:
 
@@ -73,7 +76,7 @@ You can try klirr out with sample data before you set it up with your informatio
 klirr sample
 ```
 
-## Init
+## Init [^](#thetoc)
 
 Before you can use `klirr` to generate invoices you need to provide information about your company, the client, your payment details, and other info, do it using interactive terminal ui (TUI) by running:
 
@@ -95,7 +98,7 @@ After setup is complete, you should have the following files in `$DATA_PATH/klir
 
 These files use [`RON` ("Rusty Object Notation")][ron] file format, a modern object notation superior to JSON/YAML/TOML.
 
-## Edit Data
+## Edit Data [^](#thetoc)
 If you later want to edit the data you input during init you can do so with another command:
 ```bash
 klirr data edit all
@@ -122,7 +125,7 @@ klirr data edit --help
 > You append expenses using the `klirr data expenses` command, see more info
 > below.
 
-#### Manually
+#### Manually [^](#thetoc)
 
 You can of course manually edit the files in the data folder by opening them up in your favourite text editor.
 
@@ -132,7 +135,7 @@ You can at any time validate the data by running:
 klirr data validate
 ```
 
-## Generate Invoice
+## Generate Invoice [^](#thetoc)
 
 ```bash
 klirr invoice
@@ -154,7 +157,7 @@ klirr invoice -- --output $HOME/my/custom/path/my_custom_name_of_file.pdf
 > If you don't specify `output` path the invoice will be saved in
 > `$HOME/invoices`.
 
-### Out of office for some days?
+### Out of office for some days? [^](#thetoc)
 
 If you did not work for some days, and you need to not invoice for those days, e.g. `6` days off, use:
 
@@ -162,7 +165,7 @@ If you did not work for some days, and you need to not invoice for those days, e
 klirr invoice ooo 6
 ```
 
-### Took vacation a whole month or parental leave?
+### Took vacation a whole month or parental leave? [^](#thetoc)
 
 You can ensure klirr uses correct invoice number calculations if you need to skip invoicing completely some months by marking said month(s) as "months off". You do it by:
 
@@ -184,11 +187,11 @@ Which will write to `$DATA_PATH/klirr/data/invoice_info.ron`
 
 This ensures that there are no gaps in invoice numbers.
 
-## Invoice for expenses
+## Invoice for expenses [^](#thetoc)
 
 First add the expense, then generate the invoice.
 
-### Add expenses
+### Add expenses [^](#thetoc)
 
 ```bash
 klirr data expenses --month 2025-05 -e "Sandwich, 6, EUR, 1, 2025-05-31" -e "Lunch, 11, GBP, 2, 2025-05-31"
@@ -218,7 +221,7 @@ klirr data expenses --month 2025-05 -e "Sandwich, 6, EUR, 1, 2025-05-31" -e "Lun
 >
 > You cannot edit expenses using `klirr data edit` as mentioned above.
 
-### Generate expenses invoice
+### Generate expenses invoice [^](#thetoc)
 
 Then generate the expenses invoice:
 
@@ -231,7 +234,7 @@ klirr invoice expenses
 > under the `(Date, FromCurrency, ToCurrency)` triple, to not burden the exchanges
 > API unnecessarily and to make klirr extra fast for you.
 
-## Email
+## Email [^](#thetoc)
 Klirr can automatically send an email with the invoice for you after it has been generated.
 
 This requires you to setup an *App Password* with your email service, for information on
@@ -241,7 +244,7 @@ and you will be prompted for an encryption password which will be used to encryp
 the *App Password*. The encryption password can be anything as long as it adheres to
 minimum length requirement (typically 4 chars min).
 
-### Init
+### Init [^](#thetoc)
 
 Get started with email sending of your invoices by setting up the email configuration, run:
 
@@ -261,10 +264,10 @@ Later, when using this email sending feature you will always be prompted to inpu
 > will run `klirr` from, which is safer than exporting the password in your
 > `.zshrc`.
 
-### Send Test email
+### Send Test email [^](#thetoc)
 You can try sending a test email using `klirr email test` (you will be prompted for you encryption password).
 
-### Security
+### Security [^](#thetoc)
 > [!IMPORTANT]
 > Klirr's email feature is safe to use. Klirr uses strong encryption and employes 
 > all IT security best practices to keep your *App Password* safe. 
@@ -279,19 +282,19 @@ Therefor, klirr employes these best practices to keep your *App Password* safe:
 
 You can review how klirr employes these safety measures in the [encryption folder of the code](crates/core/src/logic/encryption).
 
-# Development
+# Development [^](#thetoc)
 
 Interested in development? See [development guide](DEVELOPMENT.md)
 
-# How it works
+# How it works [^](#thetoc)
 
 Interested in how it works? See [explanation guide](HOW_IT_WORKS.md)
 
-# Etymology
+# Etymology [^](#thetoc)
 
 Klirr is a Swedish 🇸🇪 an onomatopoeia word meaning "clink" - the sound of coins falling onto a hard surface. It is part of the Swedish idiom "klirr i kassan" (_"clink in the cash register"_) meaning "cash flow", income you get from invoicing!
 
-# Example
+# Example [^](#thetoc)
 
 This is an example of the _Aioo_ `Layout` rendered using `English`.
 
