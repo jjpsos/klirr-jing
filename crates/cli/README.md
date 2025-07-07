@@ -66,8 +66,6 @@ You can either install `klirr` from a prebuilt binary or you can build it yourse
 
 ### brew<a href="#brew" id="brew"/>[ ^](#thetoc)
 
-> [!WARNING]
-> brew support is work in progress, might not work yet.
 ```bash
 brew install Sajjon/klirr/klirr
 ```
