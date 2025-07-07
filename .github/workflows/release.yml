@@ -109,6 +109,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev pkg-config
       - name: Setup sccache
         uses: ./.github/actions/setup-sccache
       - name: Set up Rust
