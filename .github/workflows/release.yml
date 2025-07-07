@@ -121,19 +121,9 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           default: true
           target: ${{ matrix.target }}
-      - name: Restore cross cache (Linux only)
-        if: matrix.os == 'ubuntu-latest'
-        id: cross-cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/cross
-          key: ${{ runner.os }}-cross-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install cross if not cached (Linux only)
-        if: matrix.os == 'ubuntu-latest' && steps.cross-cache.outputs.cache-hit != 'true'
-        run: cargo install cross
       - name: Build for ${{ matrix.target }} (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: cross build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
       - name: Build for ${{ matrix.target }} (macOS)
         if: matrix.os == 'macos-latest'
         run: cargo build --release --target ${{ matrix.target }}
