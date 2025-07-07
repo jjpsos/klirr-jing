@@ -290,11 +290,11 @@ Interested in development? See [development guide](DEVELOPMENT.md)
 
 Interested in how it works? See [explanation guide](HOW_IT_WORKS.md)
 
-# Etymology <a href="#etymology" id="etymology"/>  [^](#thetoc)
+# Etymology<a href="#etymology" id="etymology"/>[^](#thetoc)
 
 Klirr is a Swedish 🇸🇪 an onomatopoeia word meaning "clink" - the sound of coins falling onto a hard surface. It is part of the Swedish idiom "klirr i kassan" (_"clink in the cash register"_) meaning "cash flow", income you get from invoicing!
 
-# Example <a href="#example" id="example"/>  [^](#thetoc)
+# Example<a href="#example" id="example"/> [^](#thetoc)
 
 This is an example of the _Aioo_ `Layout` rendered using `English`.
 
