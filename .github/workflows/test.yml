@@ -29,14 +29,14 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-
+            - name: Setup sccache
+              uses: ./.github/actions/setup-sccache
             - name: Install Rust Toolchain
               uses: actions-rs/toolchain@v1
               with:
                   toolchain: ${{ env.RUST_TOOLCHAIN }}
                   default: true
                   components: rustfmt
-
             - name: Check formatting
               run: cargo fmt --check
 
@@ -45,30 +45,29 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-
+            - name: Setup sccache
+              uses: ./.github/actions/setup-sccache
             - name: Install Rust Toolchain
               uses: actions-rs/toolchain@v1
               with:
                   toolchain: ${{ env.RUST_TOOLCHAIN }}
                   default: true
                   components: clippy
-
             - name: Clippy Check
               run: cargo clippy --all
 
     # Rust unit, doc and integration
     test-rust:
         runs-on: ubuntu-latest
-
         steps:
             - uses: actions/checkout@v4
-
+            - name: Setup sccache
+              uses: ./.github/actions/setup-sccache
             - name: Install Rust Toolchain
               uses: actions-rs/toolchain@v1
               with:
                   toolchain: ${{ env.RUST_TOOLCHAIN }}
                   default: true
-
             - name: Run rust tests
               run: cargo test --locked -- --test-threads=1
 
