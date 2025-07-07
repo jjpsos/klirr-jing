@@ -115,6 +115,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           default: true
+          target: ${{ matrix.target }}
       - name: Restore cross cache
         id: cross-cache
         uses: actions/cache@v3
