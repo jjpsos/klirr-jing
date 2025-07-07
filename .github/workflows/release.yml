@@ -93,23 +93,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build-and-upload:
     needs: create-release
-    runs-on: ubuntu-latest
     permissions:
       contents: write
     strategy:
       matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-          - aarch64-apple-darwin
         include:
           - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
             asset_name: klirr-x86_64-unknown-linux-gnu
           - target: aarch64-apple-darwin
+            os: macos-latest
             asset_name: klirr-aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install system dependencies
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev pkg-config
@@ -121,17 +121,22 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           default: true
           target: ${{ matrix.target }}
-      - name: Restore cross cache
+      - name: Restore cross cache (Linux only)
+        if: matrix.os == 'ubuntu-latest'
         id: cross-cache
         uses: actions/cache@v3
         with:
           path: ~/.cargo/bin/cross
           key: ${{ runner.os }}-cross-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install cross if not cached
-        if: steps.cross-cache.outputs.cache-hit != 'true'
+      - name: Install cross if not cached (Linux only)
+        if: matrix.os == 'ubuntu-latest' && steps.cross-cache.outputs.cache-hit != 'true'
         run: cargo install cross
-      - name: Build for ${{ matrix.target }}
+      - name: Build for ${{ matrix.target }} (Linux)
+        if: matrix.os == 'ubuntu-latest'
         run: cross build --release --target ${{ matrix.target }}
+      - name: Build for ${{ matrix.target }} (macOS)
+        if: matrix.os == 'macos-latest'
+        run: cargo build --release --target ${{ matrix.target }}
       - name: Upload binary for ${{ matrix.target }}
         uses: softprops/action-gh-release@v2
         with:
