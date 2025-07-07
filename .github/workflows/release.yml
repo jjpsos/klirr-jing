@@ -127,12 +127,15 @@ jobs:
       - name: Build for ${{ matrix.target }} (macOS)
         if: matrix.os == 'macos-latest'
         run: cargo build --release --target ${{ matrix.target }}
+      - name: Prepare binary for upload
+        run: |
+          mkdir -p upload
+          cp target/${{ matrix.target }}/release/klirr upload/${{ matrix.asset_name }}
       - name: Upload binary for ${{ matrix.target }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.create-release.outputs.version }}
-          files: target/${{ matrix.target }}/release/klirr
-          asset_name: ${{ matrix.asset_name }}
+          files: upload/${{ matrix.asset_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   update-homebrew:
