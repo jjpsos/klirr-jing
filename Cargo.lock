@@ -2361,7 +2361,7 @@ dependencies = [
 
 [[package]]
 name = "klirr"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "chrono",
  "clap",
@@ -2387,7 +2387,7 @@ dependencies = [
 
 [[package]]
 name = "klirr-core"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",
@@ -2425,7 +2425,7 @@ dependencies = [
 
 [[package]]
 name = "klirr-render"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "chrono",
  "dirs-next",
