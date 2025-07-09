@@ -103,7 +103,7 @@ jobs:
             echo "Tree SHA: $TREE_SHA"
             
             # Create commit via GitHub API (this will be automatically signed/verified)
-            COMMIT_RESPONSE=$(curl -s -f -X POST \
+            COMMIT_RESPONSE=$(curl -s -X POST \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               -H "Accept: application/vnd.github+json" \
               -H "Content-Type: application/json" \
@@ -133,6 +133,9 @@ jobs:
             if [ "$NEW_SHA" = "null" ] || [ -z "$NEW_SHA" ]; then
               echo "Failed to create commit via API"
               echo "Response: $COMMIT_RESPONSE"
+              # Check if response contains an error message
+              ERROR_MSG=$(echo "$COMMIT_RESPONSE" | jq -r '.message // .error // "Unknown error"')
+              echo "Error message: $ERROR_MSG"
               exit 1
             fi
             
