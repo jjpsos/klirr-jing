@@ -61,13 +61,23 @@ mod tests {
             return;
         }
         compare_image_against_expected(
-            Data::sample(),
+            Data::<YearAndMonth>::sample(),
             ValidInput::builder()
                 .items(InvoicedItems::Expenses)
-                .month(YearAndMonth::sample())
+                .period(
+                    YearMonthAndFortnight::builder()
+                        .year(2025.into())
+                        .month(Month::May)
+                        .half(MonthHalf::First)
+                        .build(),
+                )
                 .language(Language::EN)
                 .build(),
             fixture("expected_expenses.png"),
+            MockedExchangeRatesFetcher::from(ExchangeRatesMap::from_iter([
+                (Currency::EUR, UnitPrice::from(10)),
+                (Currency::SEK, UnitPrice::from(10)),
+            ])),
         );
     }
 
@@ -78,13 +88,14 @@ mod tests {
             return;
         }
         compare_image_against_expected(
-            Data::sample(),
+            Data::<YearAndMonth>::sample(),
             ValidInput::builder()
-                .items(InvoicedItems::Service { days_off: None })
-                .month(YearAndMonth::sample())
+                .items(InvoicedItems::Service { time_off: None })
+                .period(YearMonthAndFortnight::sample())
                 .language(Language::EN)
                 .build(),
             fixture("expected_services.png"),
+            MockedExchangeRatesFetcher::default(),
         );
     }
 }

@@ -1,6 +1,7 @@
 [package]
 name = "klirr-render"
-version = "0.1.27"
+rust-version = "1.85.1"
+version = "0.2.0"
 edition = "2024"
 description = "Zero-maintenance and smart FOSS generating beautiful invoices for services and expenses."
 license = "MIT"
@@ -12,13 +13,14 @@ repository = "https://github.com/Sajjon/klirr"
 klirr-core.workspace = true
 
 # External dependencies
+bon.workspace = true
 chrono.workspace = true
+derive_more.workspace = true
 typst = "0.13.1"
 typst-kit = "0.13.1"
 typst-pdf = "0.13.1"
 log.workspace = true
 serde_json.workspace = true
-typed-builder.workspace = true
 getset.workspace = true
 dirs-next.workspace = true
 

@@ -11,41 +11,36 @@ impl ToTypst for PreparedData {}
 pub trait HasSample: Sized {
     /// Returns a sample instance of the type.
     fn sample() -> Self;
+    fn sample_other() -> Self;
 }
 
 /// The input data for the invoice, which includes information about the invoice,
 /// the vendor, and the client and the products/services included in the invoice.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, TypedBuilder, Getters)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Builder, Getters)]
 pub struct DataFromDiskWithItemsOfKind<Items: Serialize + MaybeIsExpenses> {
     /// Information about this specific invoice.
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     information: InvoiceInfoFull,
 
     /// The company that issued the invoice, the vendor/seller/supplier/issuer.
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     vendor: CompanyInformation,
 
     /// The company that pays the invoice, the customer/buyer.
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     client: CompanyInformation,
 
     /// Services or expenses included in this invoice to be paid by the client.
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     line_items: Items,
 
     /// Payment information for the vendor, used for international transfers.
     /// This includes the IBAN, bank name, and BIC.
     /// This is used to ensure that the client can pay the invoice correctly.
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     payment_info: PaymentInformation,
 
     /// Where to save the output PDF file.
-    #[builder(setter(into))]
     output_path: OutputPath,
 }
 
@@ -79,7 +74,7 @@ impl<Items: Serialize + MaybeIsExpenses> DataFromDiskWithItemsOfKind<Items> {
         match &self.output_path {
             OutputPath::AbsolutePath(path) => Ok(PathAndName::builder()
                 .path(path.clone())
-                .name(path.file_name().unwrap().to_string_lossy())
+                .name(path.file_name().unwrap().to_string_lossy().into())
                 .build()),
             OutputPath::Name(name) => {
                 let mut path =
@@ -94,15 +89,13 @@ impl<Items: Serialize + MaybeIsExpenses> DataFromDiskWithItemsOfKind<Items> {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, TypedBuilder, Getters)]
+#[derive(Clone, Debug, Serialize, Deserialize, Builder, Getters)]
 pub struct PathAndName {
     /// The absolute path to the file.
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     path: PathBuf,
 
     /// The name of the file.
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     name: String,
 }
@@ -118,6 +111,16 @@ impl<Items: Serialize + MaybeIsExpenses + HasSample> HasSample
             .line_items(Items::sample())
             .payment_info(PaymentInformation::sample())
             .output_path(OutputPath::Name("invoice.pdf".into()))
+            .build()
+    }
+    fn sample_other() -> Self {
+        Self::builder()
+            .information(InvoiceInfoFull::sample_other())
+            .vendor(CompanyInformation::sample_client())
+            .client(CompanyInformation::sample_vendor())
+            .line_items(Items::sample_other())
+            .payment_info(PaymentInformation::sample_other())
+            .output_path(OutputPath::Name("invoice_other.pdf".into()))
             .build()
     }
 }

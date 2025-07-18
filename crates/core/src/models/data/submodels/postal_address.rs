@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 /// The postal address of a company
 #[derive(
-    Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, TypedBuilder, Getters, WithSetters,
+    Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Builder, Getters, WithSetters,
 )]
 pub struct PostalAddress {
     /// The street address of a company, e.g.
@@ -11,19 +11,15 @@ pub struct PostalAddress {
     /// "C/o Other company"
     /// "2nd floor"
     /// ```
-    #[builder(setter(into))]
     #[getset(get = "pub", set_with = "pub")]
     street_address: StreetAddress,
     /// The zip code of the company, e.g. `"EC1A 1BB"`.
-    #[builder(setter(into))]
     #[getset(get = "pub", set_with = "pub")]
     zip: String,
     /// The country of the company, e.g. `"England"`.
-    #[builder(setter(into))]
     #[getset(get = "pub", set_with = "pub")]
     country: String,
     /// The city of the company, e.g. `"London"`.
-    #[builder(setter(into))]
     #[getset(get = "pub", set_with = "pub")]
     city: String,
 }
@@ -32,29 +28,37 @@ impl HasSample for PostalAddress {
     fn sample() -> Self {
         Self::sample_client()
     }
+
+    fn sample_other() -> Self {
+        Self::sample_vendor()
+    }
 }
 
 impl PostalAddress {
     pub fn sample_client() -> Self {
         Self::builder()
-            .city("London")
-            .country("England")
-            .street_address(StreetAddress::builder().line_1("221B Baker Street").build())
-            .zip("NW1 6XE")
+            .city("London".into())
+            .country("England".into())
+            .street_address(
+                StreetAddress::builder()
+                    .line_1("221B Baker Street".into())
+                    .build(),
+            )
+            .zip("NW1 6XE".into())
             .build()
     }
 
     pub fn sample_vendor() -> Self {
         Self::builder()
-            .city("Paris")
-            .country("France")
+            .city("Paris".into())
+            .country("France".into())
             .street_address(
                 StreetAddress::builder()
-                    .line_1("5 Avenue Henri-Martin")
-                    .line_2("Appartement 24")
+                    .line_1("5 Avenue Henri-Martin".into())
+                    .line_2("Appartement 24".into())
                     .build(),
             )
-            .zip("75116")
+            .zip("75116".into())
             .build()
     }
 }
@@ -65,9 +69,22 @@ mod tests {
     use insta::assert_debug_snapshot;
     use test_log::test;
 
+    type Sut = PostalAddress;
+
+    #[test]
+    fn equality() {
+        assert_eq!(Sut::sample(), Sut::sample());
+        assert_eq!(Sut::sample_other(), Sut::sample_other());
+    }
+
+    #[test]
+    fn inequality() {
+        assert_ne!(Sut::sample(), Sut::sample_other());
+    }
+
     #[test]
     fn test_debug() {
-        assert_debug_snapshot!(PostalAddress::sample(), @r###"
+        assert_debug_snapshot!(Sut::sample(), @r###"
         PostalAddress {
             street_address: StreetAddress {
                 line_1: "221B Baker Street",

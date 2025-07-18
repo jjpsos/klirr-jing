@@ -12,23 +12,20 @@ use crate::prelude::*;
     Hash,
     SerializeDisplay,
     DeserializeFromStr,
-    TypedBuilder,
+    Builder,
     Getters,
 )]
 #[display("{year:04}-{month:02}-{day:02}")]
 pub struct Date {
     /// e.g. 2025
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     year: Year,
 
     /// e.g. 5 for May
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     month: Month,
 
     /// e.g. 31 for the last day of May
-    #[builder(setter(into))]
     #[getset(get = "pub")]
     day: Day,
 }
@@ -68,7 +65,7 @@ impl std::str::FromStr for Date {
 
 fn from_ymd_parts(year: i32, month: u32, day: u32) -> Date {
     Date::builder()
-        .year(year)
+        .year(year.into())
         .month(Month::try_from(month).expect("Invalid month"))
         .day(Day::try_from(day).expect("Invalid day"))
         .build()
@@ -113,12 +110,19 @@ impl Date {
     }
 }
 
-impl Date {
-    pub fn sample() -> Self {
+impl HasSample for Date {
+    fn sample() -> Self {
         Self::builder()
-            .year(2025)
+            .year(2025.into())
             .month(Month::May)
             .day(Day::try_from(31).expect("LEQ 31 days"))
+            .build()
+    }
+    fn sample_other() -> Self {
+        Self::builder()
+            .year(2024.into())
+            .month(Month::December)
+            .day(Day::try_from(15).expect("LEQ 31 days"))
             .build()
     }
 }
@@ -128,9 +132,22 @@ mod tests {
     use super::*;
     use test_log::test;
 
+    type Sut = Date;
+
+    #[test]
+    fn equality() {
+        assert_eq!(Sut::sample(), Sut::sample());
+        assert_eq!(Sut::sample_other(), Sut::sample_other());
+    }
+
+    #[test]
+    fn inequality() {
+        assert_ne!(Sut::sample(), Sut::sample_other());
+    }
+
     #[test]
     fn test_date_from_str() {
-        let sut = Date::from_str("2025-05-23").unwrap();
+        let sut = Sut::from_str("2025-05-23").unwrap();
         assert_eq!(sut.year(), &Year::from(2025));
         assert_eq!(sut.month(), &Month::May);
         assert_eq!(sut.day(), &Day::try_from(23).unwrap());
@@ -158,20 +175,8 @@ mod tests {
         ];
 
         for date in invalid_dates {
-            assert!(Date::from_str(date).is_err());
+            assert!(Sut::from_str(date).is_err());
         }
-    }
-
-    #[test]
-    fn test_compare_year_and_month() {
-        let date1 = YearAndMonth::from_str("2025-05").unwrap();
-        let date2 = YearAndMonth::from_str("2025-06").unwrap();
-        let date3 = YearAndMonth::from_str("2024-12").unwrap();
-
-        assert!(date1 < date2);
-        assert!(date2 > date1);
-        assert!(date1 > date3);
-        assert!(date3 < date1);
     }
 
     #[test]

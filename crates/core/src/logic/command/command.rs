@@ -12,97 +12,14 @@ fn input_email_data_at(
     Ok(())
 }
 
-fn input_data_at(
-    default_data: Data,
+fn input_data_at<Period: IsPeriod + Serialize>(
+    default_data: Data<Period>,
     write_path: impl AsRef<Path>,
-    provide_data: impl FnOnce(Data) -> Result<Data>,
+    provide_data: impl FnOnce(Data<Period>) -> Result<Data<Period>>,
 ) -> Result<()> {
     let data = provide_data(default_data)?;
     save_data_with_base_path(data, write_path)?;
     Ok(())
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DataSelector {
-    /// All but expensed months
-    All,
-    Vendor,
-    Client,
-    Information,
-    PaymentInfo,
-    ServiceFees,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EmailSettingsSelector {
-    All,
-    AppPassword,
-    EncryptionPassword,
-    Template,
-    SmtpServer,
-    ReplyTo,
-    Sender,
-    Recipients,
-    CcRecipients,
-    BccRecipients,
-}
-
-pub trait Select {
-    fn includes(&self, target: Self) -> bool;
-}
-
-impl Select for DataSelector {
-    fn includes(&self, target: Self) -> bool {
-        match self {
-            DataSelector::All => true,
-            DataSelector::Vendor => matches!(target, DataSelector::Vendor),
-            DataSelector::Client => matches!(target, DataSelector::Client),
-            DataSelector::Information => matches!(target, DataSelector::Information),
-            DataSelector::PaymentInfo => matches!(target, DataSelector::PaymentInfo),
-            DataSelector::ServiceFees => matches!(target, DataSelector::ServiceFees),
-        }
-    }
-}
-
-impl EmailSettingsSelector {
-    pub fn requires_encryption_password(&self) -> bool {
-        use EmailSettingsSelector::*;
-        match self {
-            All | AppPassword | EncryptionPassword => true,
-            Template | SmtpServer | ReplyTo | Sender | Recipients | CcRecipients
-            | BccRecipients => false,
-        }
-    }
-}
-impl Select for EmailSettingsSelector {
-    fn includes(&self, target: Self) -> bool {
-        match self {
-            EmailSettingsSelector::All => true,
-            EmailSettingsSelector::AppPassword => {
-                matches!(target, EmailSettingsSelector::AppPassword)
-            }
-            EmailSettingsSelector::EncryptionPassword => {
-                matches!(target, EmailSettingsSelector::EncryptionPassword)
-            }
-            EmailSettingsSelector::Template => {
-                matches!(target, EmailSettingsSelector::Template)
-            }
-            EmailSettingsSelector::SmtpServer => {
-                matches!(target, EmailSettingsSelector::SmtpServer)
-            }
-            EmailSettingsSelector::ReplyTo => matches!(target, EmailSettingsSelector::ReplyTo),
-            EmailSettingsSelector::Sender => matches!(target, EmailSettingsSelector::Sender),
-            EmailSettingsSelector::Recipients => {
-                matches!(target, EmailSettingsSelector::Recipients)
-            }
-            EmailSettingsSelector::CcRecipients => {
-                matches!(target, EmailSettingsSelector::CcRecipients)
-            }
-            EmailSettingsSelector::BccRecipients => {
-                matches!(target, EmailSettingsSelector::BccRecipients)
-            }
-        }
-    }
 }
 
 pub fn edit_email_data_at(
@@ -119,7 +36,7 @@ pub fn edit_email_data_at(
 
 pub fn edit_data_at(
     path: impl AsRef<Path>,
-    provide_data: impl FnOnce(Data) -> Result<Data>,
+    provide_data: impl FnOnce(Data<PeriodAnno>) -> Result<Data<PeriodAnno>>,
 ) -> Result<()> {
     let path = path.as_ref();
     info!("Editing data at: {}", path.display());
@@ -129,13 +46,13 @@ pub fn edit_data_at(
     Ok(())
 }
 
-pub fn init_data_at(
+pub fn init_data_at<Period: IsPeriod + Serialize + DeserializeOwned + HasSample>(
     write_path: impl AsRef<Path>,
-    provide_data: impl FnOnce(Data) -> Result<Data>,
+    provide_data: impl FnOnce(Data<Period>) -> Result<Data<Period>>,
 ) -> Result<()> {
     let write_path = write_path.as_ref();
     info!("Initializing data directory at: {}", write_path.display());
-    input_data_at(Data::sample(), write_path, provide_data)?;
+    input_data_at(Data::<Period>::sample(), write_path, provide_data)?;
     info!("✅ Data init done, you're ready: `{} invoice`", BINARY_NAME);
     Ok(())
 }
@@ -164,43 +81,6 @@ fn decrypt_email_settings_and<T>(
     let encryption_password = get_email_password()?;
     let email_settings = email_settings.decrypt_smtp_app_password(encryption_password)?;
     on_decrypt(email_settings)
-}
-
-impl From<(DecryptedEmailSettings, NamedPdf)> for Email {
-    fn from((settings, pdf): (DecryptedEmailSettings, NamedPdf)) -> Self {
-        let (subject, body) = settings.template().materialize(pdf.prepared_data());
-        Email::builder()
-            .subject(subject)
-            .body(body)
-            .public_recipients(settings.recipients().clone())
-            .cc_recipients(settings.cc_recipients().clone())
-            .bcc_recipients(settings.bcc_recipients().clone())
-            .attachments([Attachment::Pdf(pdf)])
-            .build()
-    }
-}
-
-impl From<DecryptedEmailSettings> for EmailCredentials {
-    fn from(settings: DecryptedEmailSettings) -> Self {
-        EmailCredentials::builder()
-            .account(
-                EmailAccount::builder()
-                    .name(settings.sender().name())
-                    .email(settings.sender().email().clone())
-                    .build(),
-            )
-            .password(settings.smtp_app_password().expose_secret())
-            .smtp_server(settings.smtp_server().clone())
-            .build()
-    }
-}
-
-impl DecryptedEmailSettings {
-    pub fn compose(&self, pdf: &NamedPdf) -> (Email, EmailCredentials) {
-        let email = Email::from((self.clone(), pdf.clone()));
-        let credentials = EmailCredentials::from(self.clone());
-        (email, credentials)
-    }
 }
 
 fn load_email_data_and_send_test_email_at_with_send(
@@ -254,29 +134,51 @@ pub fn validate_email_data_at(
 }
 
 fn mutate<D: Serialize + DeserializeOwned + Clone>(
-    data_path: impl AsRef<Path>,
-    data_file_name: &str,
+    path: impl AsRef<Path>,
     mutate: impl FnOnce(&mut D),
 ) -> Result<()> {
-    let data_path = data_path.as_ref();
-    let mut data = load_data::<D>(data_path, data_file_name)?.clone();
+    let mut data = deserialize_contents_of_ron(&path)?;
     mutate(&mut data);
-    let path = path_to_ron_file_with_base(data_path, data_file_name);
-    save_to_disk(&data, path)?;
+    save_to_disk(&data, &path)?;
     Ok(())
 }
 
-pub fn record_expenses_with_base_path(
-    month: &YearAndMonth,
+/// Adds `expenses` to the specified `period` in the data file at `data_path`.
+///
+/// # Throws
+/// Throws an error if the period type is incompatible with the service fees cadence.
+pub fn record_expenses_with_base_path<Period: IsPeriod + Serialize + DeserializeOwned>(
+    period: &Period,
     expenses: &[Item],
     data_path: impl AsRef<Path>,
 ) -> Result<()> {
-    info!("Recording #{} expenses for: {}", expenses.len(), month);
+    let data_path = data_path.as_ref();
+    info!("Recording #{} expenses for: {:?}", expenses.len(), period);
+
+    // First we assert that we are not mixing months and fortnights
+    let service_fees = service_fees(data_path)?;
+    match (
+        service_fees.cadence(),
+        Into::<PeriodAnno>::into(period.clone()),
+    ) {
+        (Cadence::Monthly, PeriodAnno::YearMonthAndFortnight(_)) => {
+            return Err(Error::CannotExpenseForFortnightWhenCadenceIsMonthly);
+        }
+        (Cadence::BiWeekly, PeriodAnno::YearAndMonth(_)) => {
+            return Err(Error::CannotExpenseForMonthWhenCadenceIsBiWeekly);
+        }
+        (Cadence::Monthly, PeriodAnno::YearAndMonth(_)) => {
+            // Monthly cadence is compatible with YearAndMonth
+        }
+        (Cadence::BiWeekly, PeriodAnno::YearMonthAndFortnight(_)) => {
+            // BiWeekly cadence is compatible with YearMonthAndFortnight
+        }
+    }
+
     mutate(
-        data_path,
-        DATA_FILE_NAME_EXPENSES,
-        |data: &mut ExpensedMonths| {
-            data.insert_expenses(month, expenses.to_vec());
+        expensed_periods_path(data_path),
+        |data: &mut ExpensedPeriods<Period>| {
+            data.insert_expenses(period, expenses.to_vec());
         },
     )
     .inspect(|_| {
@@ -284,20 +186,17 @@ pub fn record_expenses_with_base_path(
     })
 }
 
-pub fn record_month_off_with_base_path(
-    month: &YearAndMonth,
-    data_path: impl AsRef<Path>,
+pub fn record_period_off_with_base_path<Period: IsPeriod + Serialize + DeserializeOwned>(
+    period: &Period,
+    base_path: impl AsRef<Path>,
 ) -> Result<()> {
-    info!("Recording month off for: {}", month);
+    info!("Recording period off for: {:?}", period);
     mutate(
-        data_path,
-        DATA_FILE_NAME_PROTO_INVOICE_INFO,
-        |data: &mut ProtoInvoiceInfo| {
-            data.insert_month_off(*month);
-        },
+        proto_invoice_info_path(base_path),
+        |data: &mut ProtoInvoiceInfo<Period>| data.insert_period_off(period.clone()),
     )
     .inspect(|_| {
-        info!("✅ Month off recorded successfully");
+        info!("✅ Period off recorded successfully");
     })
 }
 
@@ -339,7 +238,7 @@ mod tests {
     #[test]
     fn test_read_data_from_disk() {
         let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
-        save_data_with_base_path(Data::sample(), tempdir.path()).unwrap();
+        save_data_with_base_path(Data::<YearAndMonth>::sample(), tempdir.path()).unwrap();
         let result = read_data_from_disk_with_base_path(tempdir.path());
         assert!(
             result.is_ok(),
@@ -351,7 +250,7 @@ mod tests {
     #[test]
     fn test_init_data_directory_at() {
         let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
-        let result = init_data_at(tempdir.path(), Ok);
+        let result = init_data_at::<YearAndMonth>(tempdir.path(), Ok);
         assert!(
             result.is_ok(),
             "Expected data directory initialization to succeed, got: {:?}",
@@ -364,23 +263,24 @@ mod tests {
         let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
         let month = YearAndMonth::may(2025);
         save_to_disk(
-            &ProtoInvoiceInfo::sample(),
-            path_to_ron_file_with_base(tempdir.path(), DATA_FILE_NAME_PROTO_INVOICE_INFO),
+            &ProtoInvoiceInfo::<YearAndMonth>::sample(),
+            proto_invoice_info_path(tempdir.path()),
         )
         .unwrap();
-        record_month_off_with_base_path(&month, tempdir.path()).unwrap();
+        record_period_off_with_base_path(&month, tempdir.path()).unwrap();
 
         // Verify that the month was recorded correctly
         let data = proto_invoice_info(tempdir.path()).unwrap();
-        assert!(data.months_off_record().contains(&month));
+        assert!(data.record_of_periods_off().contains(&month));
     }
 
     #[test]
     fn test_record_expenses_with_base_path() {
         let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
+        save_to_disk(&ServiceFees::sample(), service_fees_path(tempdir.path())).unwrap();
         save_to_disk(
-            &ExpensedMonths::sample(),
-            path_to_ron_file_with_base(tempdir.path(), DATA_FILE_NAME_EXPENSES),
+            &ExpensedPeriods::<YearAndMonth>::sample(),
+            expensed_periods_path(tempdir.path()),
         )
         .unwrap();
         let month = YearAndMonth::may(2025);
@@ -389,8 +289,42 @@ mod tests {
         record_expenses_with_base_path(&month, &expenses, tempdir.path()).unwrap();
 
         // Verify that the month was recorded correctly
-        let data = expensed_months(tempdir.path()).unwrap();
+        let data = expensed_periods::<YearAndMonth>(tempdir.path()).unwrap();
         assert!(data.contains(&month));
+    }
+
+    #[test]
+    fn test_record_expenses_with_base_path_fail_because_wrong_period_kind() {
+        let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
+        save_to_disk(
+            &ExpensedPeriods::<YearAndMonth>::sample(),
+            expensed_periods_path(tempdir.path()),
+        )
+        .unwrap();
+        let period = YearMonthAndFortnight::builder()
+            .year(2025.into())
+            .month(Month::May)
+            .half(MonthHalf::Second)
+            .build();
+        let expenses = vec![Item::sample_expense_breakfast()];
+
+        let result = record_expenses_with_base_path(&period, &expenses, tempdir.path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_record_expenses_with_base_path_fail_because_wrong_period_kind_ymf() {
+        let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
+        save_to_disk(
+            &ExpensedPeriods::<YearMonthAndFortnight>::sample(),
+            expensed_periods_path(tempdir.path()),
+        )
+        .unwrap();
+        let period = YearAndMonth::may(2025);
+        let expenses = vec![Item::sample_expense_breakfast()];
+
+        let result = record_expenses_with_base_path(&period, &expenses, tempdir.path());
+        assert!(result.is_err());
     }
 
     #[test]
@@ -431,7 +365,7 @@ mod tests {
     #[test]
     fn test_edit_data_at() {
         let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
-        let data = Data::sample();
+        let data = Data::<YearAndMonth>::sample();
         let first = CompanyInformation::sample_vendor();
         let second = CompanyInformation::sample_client();
         assert_ne!(
@@ -498,7 +432,7 @@ mod tests {
             result
         );
         let loaded_email_settings: EncryptedEmailSettings =
-            load_data(tempdir.path(), DATA_FILE_NAME_EMAIL_SETTINGS).unwrap();
+            deserialize_contents_of_ron(email_settings_path(tempdir.path())).unwrap();
         assert_eq!(email_settings, loaded_email_settings);
     }
 
@@ -690,6 +624,58 @@ mod tests {
         assert_eq!(
             credentials.password().expose_secret(),
             email_settings.smtp_app_password().expose_secret()
+        );
+    }
+
+    #[test]
+    fn test_record_expenses_with_base_path_throws_when_cadence_is_monthly_and_period_is_fortnight()
+    {
+        let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
+        let period = YearMonthAndFortnight::builder()
+            .year(Year::from(2025))
+            .month(Month::January)
+            .half(MonthHalf::First)
+            .build();
+        let services_fees: ServiceFees = ServiceFees::builder()
+            .cadence(Cadence::Monthly)
+            .rate(Rate::daily(UnitPrice::ONE))
+            .name("Sample Service Fees".to_owned())
+            .build()
+            .unwrap();
+        save_to_disk(&services_fees, service_fees_path(tempdir.path())).unwrap();
+        let result = record_expenses_with_base_path(
+            &period,
+            &[Item::sample_expense_breakfast()],
+            tempdir.path(),
+        );
+        assert!(
+            result.is_err(),
+            "Expected error when recording expenses for fortnight with monthly cadence, got: {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_record_expenses_with_base_path_throws_when_cadence_is_bi_weekly_and_period_is_year_and_month()
+     {
+        let tempdir = tempfile::tempdir().expect("Failed to create temp dir");
+        let period = YearAndMonth::may(2025);
+        let services_fees: ServiceFees = ServiceFees::builder()
+            .cadence(Cadence::BiWeekly)
+            .rate(Rate::daily(UnitPrice::ONE))
+            .name("Sample Service Fees".to_owned())
+            .build()
+            .unwrap();
+        save_to_disk(&services_fees, service_fees_path(tempdir.path())).unwrap();
+        let result = record_expenses_with_base_path(
+            &period,
+            &[Item::sample_expense_breakfast()],
+            tempdir.path(),
+        );
+        assert!(
+            result.is_err(),
+            "Expected error when recording expenses for year and month with bi-weekly cadence, got: {:?}",
+            result
         );
     }
 }

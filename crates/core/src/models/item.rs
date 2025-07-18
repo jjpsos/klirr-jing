@@ -16,7 +16,7 @@ macro_rules! define_item_struct {
             Deserialize,
             Getters,
             Setters,
-            TypedBuilder,
+            Builder,
         )]
         #[display(
             "{}: {}{} #{} @{}",
@@ -28,25 +28,20 @@ macro_rules! define_item_struct {
         )]
         $vis struct $name {
             /// The short name of the expense, e.g. `"Coffee"`
-            #[builder(setter(into))]
             #[getset(get = "pub")]
             name: String,
             /// The cost per item
-            #[builder(setter(into))]
             #[getset(get = "pub")]
             unit_price: UnitPrice,
             /// The currency of the expense, e.g. `"EUR"`, this
             /// is the currency in which the expense was paid,
             /// and not necessarily the currency of the invoice.
-            #[builder(setter(into))]
             #[getset(get = "pub")]
             currency: Currency,
             /// The quantity of the expense, e.g. `2.0` for two items
-            #[builder(setter(into))]
             #[getset(get = "pub", set)]
             quantity: $quantity_ty,
             /// The date of the expense, e.g. `2025-05-31`
-            #[builder(setter(into))]
             #[getset(get = "pub")]
             transaction_date: Date,
         }
@@ -59,51 +54,44 @@ impl HasSample for Item {
     fn sample() -> Self {
         Self::sample_expense_coffee()
     }
+    fn sample_other() -> Self {
+        Self::sample_consulting_service()
+    }
 }
 
 impl Item {
     pub fn sample_expense_breakfast() -> Self {
         Self::builder()
-            .name("Breakfast")
+            .name("Breakfast".into())
             .transaction_date(
                 Date::builder()
-                    .year(2025)
+                    .year(2025.into())
                     .month(Month::May)
                     .day(Day::try_from(20).unwrap())
                     .build(),
             )
-            .quantity(dec!(1.0))
-            .unit_price(dec!(145.0))
+            .quantity(dec!(1.0).into())
+            .unit_price(dec!(145.0).into())
             .currency(Currency::SEK)
             .build()
     }
 
     pub fn sample_expense_coffee() -> Self {
         Self::builder()
-            .name("Coffee")
+            .name("Coffee".into())
             .transaction_date(Date::sample())
-            .quantity(dec!(2.0))
-            .unit_price(dec!(4.0))
-            .currency(Currency::GBP)
-            .build()
-    }
-
-    pub fn sample_expense_sandwich() -> Self {
-        Self::builder()
-            .name("Sandwich")
-            .transaction_date(Date::sample())
-            .quantity(dec!(1.0))
-            .unit_price(dec!(7.0))
+            .quantity(dec!(2.0).into())
+            .unit_price(dec!(4.0).into())
             .currency(Currency::GBP)
             .build()
     }
 
     pub fn sample_consulting_service() -> Self {
         Self::builder()
-            .name("Agreed Consulting Fees")
+            .name("Agreed Consulting Fees".into())
             .transaction_date(Date::sample())
-            .quantity(dec!(22.0))
-            .unit_price(dec!(500.0))
+            .quantity(dec!(22.0).into())
+            .unit_price(dec!(500.0).into())
             .currency(Currency::EUR)
             .build()
     }
@@ -234,10 +222,23 @@ mod tests {
     use super::*;
     use test_log::test;
 
+    type Sut = Item;
+
+    #[test]
+    fn equality() {
+        assert_eq!(Sut::sample(), Sut::sample());
+        assert_eq!(Sut::sample_other(), Sut::sample_other());
+    }
+
+    #[test]
+    fn inequality() {
+        assert_ne!(Sut::sample(), Sut::sample_other());
+    }
+
     #[test]
     fn test_from_str() {
         // N.B. sometimes space after comma, sometimes not.
-        let sut = Item::from_str("Coffee,2.5, EUR,3.0, 2025-05-31").expect("Failed to parse Item");
+        let sut = Sut::from_str("Coffee,2.5, EUR,3.0, 2025-05-31").expect("Failed to parse Item");
         assert_eq!(sut.name(), "Coffee");
         assert_eq!(**sut.unit_price(), dec!(2.5));
         assert_eq!(sut.currency(), &Currency::EUR);
@@ -246,14 +247,6 @@ mod tests {
             sut.transaction_date(),
             &Date::from_str("2025-05-31").unwrap()
         );
-    }
-
-    #[test]
-    fn inequal() {
-        let item1 = Item::sample_expense_coffee();
-        let item2 = Item::sample_consulting_service();
-        assert_ne!(item1, item2);
-        assert_ne!(item1, Item::sample_expense_sandwich());
     }
 
     #[test]
@@ -269,7 +262,7 @@ mod tests {
         ];
 
         for &s in &invalid_strings {
-            assert!(Item::from_str(s).is_err(), "Expected error for: {}", s);
+            assert!(Sut::from_str(s).is_err(), "Expected error for: {}", s);
         }
     }
 }
