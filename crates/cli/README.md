@@ -214,7 +214,7 @@ klirr invoice services-off --quantity 16 --unit hours
 
 > [!IMPORTANT]
 > The `unit` **MUST** match the `rate` specified in the `service_fees.ron`, e.g.
-> if you are invoicing with a **daily** rate, you must pass `--unit days` 
+> if you are invoicing with a **daily** rate, you must pass `--unit days`
 > and analogoulsy if you are invoicing with an **hourly** rate you
 > must pass `--unit hours`.
 
@@ -242,8 +242,8 @@ This ensures that there are no gaps in invoice numbers for the month(s) you were
 
 > [!TIP]
 > There is currently no support for subtracting/removing periods off using Cli, if you made a mistake
-> or otherwise wanna perform some changes, manually edit the file 
-> `$DATA_PATH/klirr/data/invoice_info.ron` where `$DATA_PATH` depends [on OS][data_path], but typically 
+> or otherwise wanna perform some changes, manually edit the file
+> `$DATA_PATH/klirr/data/invoice_info.ron` where `$DATA_PATH` depends [on OS][data_path], but typically
 >`$HOME/Library/Application Support` on macOS using your favourite text editor.
 >
 > After edit you can validate the data with:
@@ -342,9 +342,9 @@ You can try sending a test email using `klirr email test` (you will be prompted 
 > services does not allow users to limit the scope and permission of the _App Password_, with it
 > and attacker can read all your emails and send emails to anyone impersonating you!
 
-Therefor, klirr employes these best practices to keep your _App Password_ safe: 
-1. Key-Derivation: Klirr does not use your encryption password directly, first it's run through a [Hash based Key-Derivation-Function](https://en.wikipedia.org/wiki/HKDF) using a application unique `INFO` (see 'How Should You Introduce Randomness into HKDF?' section of [this blog post](https://soatok.blog/2021/11/17/understanding-hkdf/)) and cryptographically secure random generated [`SALT`](https://en.wikipedia.org/wiki/Salt\_(cryptography)), this forms a strong and unique `EncryptionKey` 
-2. Advanced Encryption: Klirr uses [AES (Advanced Encryption Standard)] encryption with 256 bits strength, encrypted using the `EncryptionKey` from last step. 
+Therefor, klirr employes these best practices to keep your _App Password_ safe:
+1. Key-Derivation: Klirr does not use your encryption password directly, first it's run through a [Hash based Key-Derivation-Function](https://en.wikipedia.org/wiki/HKDF) using a application unique `INFO` (see 'How Should You Introduce Randomness into HKDF?' section of [this blog post](https://soatok.blog/2021/11/17/understanding-hkdf/)) and cryptographically secure random generated [`SALT`](https://en.wikipedia.org/wiki/Salt\_(cryptography)), this forms a strong and unique `EncryptionKey`
+2. Advanced Encryption: Klirr uses [AES (Advanced Encryption Standard)] encryption with 256 bits strength, encrypted using the `EncryptionKey` from last step.
 3. Zeroisation: Klirr uses [Zeroisation](https://en.wikipedia.org/wiki/Zeroisation) to eagerly erase sensitive secrets from memory.
 
 You can review how klirr employes these safety measures in the [encryption folder of the code](crates/core/src/logic/encryption).
@@ -375,3 +375,7 @@ This is an example of the _Aioo_ `Layout` rendered using `English`.
 [data_path]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
 [typst]: https://github.com/typst/typst
 [license]: LICENSE.txt
+
+* * *
+
+Interesting project that automates a basic invoice system.  Klirr-Jing is my exploration of this Rust/Typst project.  My goal, perhaps, is to further automate more features in regard to the original Klirr project.
